@@ -6,9 +6,11 @@ Tiledesk Module for AI
 ### nlu.json
 
 ```json
-{ configuration: {
+{
+  configuration: {
    algo: "auto"
-   { intents... }
+  },
+  intents: []
 } 
 ```
 
