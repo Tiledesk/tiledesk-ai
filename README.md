@@ -7,11 +7,11 @@ Tiledesk Module for AI
 
 ```json
 {
-  configuration: {
-   algo: "auto"
-  },
-  intents: []
-} 
+	"configuration": {
+		"algo": "auto"
+	},
+	"intents": []
+}
 ```
 
 ### Train
