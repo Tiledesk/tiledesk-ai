@@ -26,17 +26,18 @@ Defaults to local file named nlu.json
 > tileai query -q "who are you"
 ```
 
-## Webapp
+## HTTP server
 
-### Run webapp
+### Run the HTTP server
 
-Default port is 6006
+You can run the tiledesk-ai module as a web app, launching the HTTP server.
+Default HTTP server port is 6006. You can change the port using the _-p port_ option.
 
 ```shell
 > tileai run [-p port]
 ```
 
-### Query from web app
+### Query from HTTP server
 
 ```shell
 > http://localhost?query=who%20are%20you
