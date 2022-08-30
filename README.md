@@ -26,9 +26,9 @@ Defaults to local file named nlu.json
 > tileai query -q "who are you"
 ```
 
-## APIs
+## Webapp
 
-### Run web app
+### Run webapp
 
 Default port is 6006
 
@@ -42,3 +42,6 @@ Default port is 6006
 > http://localhost?query=who%20are%20you
 ```
 
+## APIs
+
+TODO
