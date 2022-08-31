@@ -10,7 +10,7 @@ Tiledesk Module for AI
 	"configuration": {
 		"algo": "auto"
 	},
-	"intents": []
+	"nlu": []
 }
 ```
 
