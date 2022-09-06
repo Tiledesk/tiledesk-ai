@@ -1,0 +1,11 @@
+# required modules
+clint
+pandas>=1.4.3
+Sanic>=22.3.2
+aiohttp>=3.8.1
+sklearn
+transformers>=4.20.1
+datasets
+torch
+torchtext
+scikit-plot

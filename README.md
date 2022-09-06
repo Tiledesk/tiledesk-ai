@@ -1,7 +1,25 @@
 # tiledesk-ai
 Tiledesk Module for AI
 
+This module uses a simple Feed Forward Network implemented using PyTorch (more to come in the future) to understand the user intent.
+
 ## Use with the command line
+
+### Install
+
+```
+pip install -r requirements.txt
+```
+
+```
+>python setup.py install
+```
+For developement, use:
+```
+>python setup.py develop
+```
+to install in-place the program. You can edit the script files and test them from the command line. 
+
 
 ### nlu.json
 
@@ -18,7 +36,7 @@ Tiledesk Module for AI
 Defaults to local file named nlu.json
 
 ```
-> tileai train [-f filepath]
+> tileai train [-f filepath] [-o output model]
 ```
 ### Query
 
