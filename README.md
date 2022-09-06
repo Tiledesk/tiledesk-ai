@@ -28,7 +28,12 @@ to install in-place the program. You can edit the script files and test them fro
 	"configuration": {
 		"algo": "auto"
 	},
-	"nlu": []
+	"nlu": [{	
+      "intent":"hello_intent",
+      "examples":["Hi","Hello", "..."]
+	},...
+
+	]
 }
 ```
 
