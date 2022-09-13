@@ -31,7 +31,7 @@ to install in-place the program. You can edit the script files and test them fro
 	"nlu": [{	
       "intent":"hello_intent",
       "examples":["Hi","Hello", "..."]
-	},...
+	},
 
 	]
 }
@@ -46,7 +46,7 @@ Defaults to local file named nlu.json
 ### Query
 
 ```shell
-> tileai query -q "who are you"
+> tileai query [-m model path] -t "question"
 ```
 
 ## HTTP server
