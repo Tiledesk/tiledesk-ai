@@ -4,7 +4,7 @@ import argparse
 import logging
 from . import _program
 from clint.textui import puts, indent, colored
-from cli import train
+from cli import train, query
 from shared.exceptions import TileaiException
 
 logger = logging.getLogger(__name__)
@@ -36,6 +36,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     #run.add_subparser(subparsers, parents=parent_parsers)
     #shell.add_subparser(subparsers, parents=parent_parsers)
     train.add_subparser(subparsers, parents=parent_parsers)
+    query.add_subparser(subparsers, parents=parent_parsers)
     #interactive.add_subparser(subparsers, parents=parent_parsers)
 
     return parser

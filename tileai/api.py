@@ -9,3 +9,8 @@ def train(nlu:"Text",
     from tileai.model_training import train
 
     return train(nlu,out)
+
+def query(model, query_text):
+    from tileai.model_training import query
+    return query(model, query_text)
+

@@ -40,7 +40,7 @@
        "mi piacerebbe mangiare qualcosa", "indicami un buon posto dove pranzare", "indicami un buon posto dove cenare"]
       },
        {
-      "intent":"taxy",
+      "intent":"taxi",
       "examples":["come posso chiamare un taxi?",
       "ho bisogno di un taxi", 
       "mi serve un taxi",

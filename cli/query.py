@@ -11,50 +11,46 @@ if TYPE_CHECKING:
 def add_subparser(
     subparsers: SubParsersAction, parents: List[argparse.ArgumentParser]
 ) -> None:
-    """Add all training parsers.
+    """Add query parsers.
 
     Args:
         subparsers: subparser we are going to attach to
         parents: Parent parsers, needed to ensure tree structure in argparse
     """
     train_parser = subparsers.add_parser(
-        "train",
-        help="Trains a Tileai model using your NLU data.",
+        "query",
+        help="Query a Tileai model using.",
         parents=parents,
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
     add_config_param(train_parser)
-    add_out_param(train_parser, help_text="Path form models")
+    add_text_param(train_parser, help_text="Your Text")
 
     
-    train_parser.set_defaults(func=run_training)
+    train_parser.set_defaults(func=run_query)
 
     
     
 def add_config_param(
     parser: Union[argparse.ArgumentParser, argparse._ActionsContainer]) -> None:
-    """Specifies path to training data."""
+    """Specifies path to model."""
     parser.add_argument(
-        "-f","--file",
-        default="nlu.json",
-        help="Paths to the NLU config file.",
+        "-m","--model",
+        default="default.pt",
+        help="Paths to the NLU model file.",
     )
 
-def add_out_param(
+def add_text_param(
     parser: Union[argparse.ArgumentParser, argparse._ActionsContainer],
-    help_text: Text,
-    default: Optional[Text] = "models",
-    required: bool = False,) -> None:
+    help_text: Text) -> None:
     parser.add_argument(
-        "-o","--out",
+        "-t","--text",
         type=str,
-        default=default,
         help=help_text,
-        required=required and default is None,
     )
 
-def run_training(args: argparse.Namespace, can_exit: bool = False) -> Optional[Text]:
+def run_query(args: argparse.Namespace, can_exit: bool = False) -> Optional[Text]:
     """Trains a model.
 
     Args:
@@ -69,14 +65,14 @@ def run_training(args: argparse.Namespace, can_exit: bool = False) -> Optional[T
     #if training_result.code != 0 and can_exit:
     #    sys.exit(training_result.code)
     
-    from tileai import train
+    from tileai import query
     import cli.utils
-    nlu = cli.utils.get_validated_path(
-        args.file, "file", "domain/nlu.json", none_is_valid=True
+    model = cli.utils.get_validated_path(
+        args.model, "model", "models/default", none_is_valid=True
     )
-    out = args.out
+    query_text = args.text
     #out = cli.utils.get_validated_path(
     #    args.out, "out", "./models/", none_is_valid=True
     #)
-    result = train(nlu, out)
-    return result.model
+    query(model, query_text)
+    

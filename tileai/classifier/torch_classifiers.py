@@ -2,11 +2,11 @@ from torch import nn
 from torch.nn import functional as F
 
 class EmbeddingClassifier(nn.Module):
-    def __init__(self, vocab, target_classes):
+    def __init__(self, vocab_size, n_target_classes):
         super(EmbeddingClassifier, self).__init__()
         
         self.seq = nn.Sequential(
-            nn.Embedding(num_embeddings=len(vocab), embedding_dim=40),#25
+            nn.Embedding(num_embeddings=vocab_size, embedding_dim=40),#25
 
             nn.Flatten(),
 
@@ -20,7 +20,7 @@ class EmbeddingClassifier(nn.Module):
             nn.Linear(128,64),
             nn.ReLU(),
 
-            nn.Linear(64, len(target_classes)),
+            nn.Linear(64, n_target_classes),
         )
 
     def forward(self, X_batch):

@@ -1,0 +1,19 @@
+{
+    "class": "EmbeddingClassifier",
+    "module": "tileai.classifier.torch_classifiers",
+    "id2label": {
+        "0": "chisei",
+        "1": "dovesei",
+        "2": "ristorante",
+        "3": "saluti",
+        "4": "taxy"
+    },
+    "label2id": {
+        "chisei": 0,
+        "dovesei": 1,
+        "ristorante": 2,
+        "saluti": 3,
+        "taxy": 4
+    },
+    "vocab_size": 72
+}
