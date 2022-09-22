@@ -4,7 +4,7 @@ import argparse
 import logging
 from . import _program
 from clint.textui import puts, indent, colored
-from cli import train, query
+from cli import train, query, run
 from shared.exceptions import TileaiException
 
 logger = logging.getLogger(__name__)
@@ -33,13 +33,17 @@ def create_argument_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(help="Tileai commands")
 
     
-    #run.add_subparser(subparsers, parents=parent_parsers)
+    run.add_subparser(subparsers, parents=parent_parsers)
     #shell.add_subparser(subparsers, parents=parent_parsers)
     train.add_subparser(subparsers, parents=parent_parsers)
     query.add_subparser(subparsers, parents=parent_parsers)
     #interactive.add_subparser(subparsers, parents=parent_parsers)
 
     return parser
+def tileai_version() -> None:
+    """Prints version information of tileai"""
+    from cli import __version__
+    print(f"Tileai Version      :         {__version__}")
 
 def main(args = sys.argv[1:]):
     arg_parser = create_argument_parser()
@@ -48,8 +52,8 @@ def main(args = sys.argv[1:]):
     try:
         if hasattr(cmdline_arguments, "func"):
             cmdline_arguments.func(cmdline_arguments)
-        #elif hasattr(cmdline_arguments, "version"):
-        #    print_version()
+        elif hasattr(cmdline_arguments, "version"):
+            tileai_version()
         else:
             # user has not provided a subcommand, let's print the help
             logger.error("No command specified.")

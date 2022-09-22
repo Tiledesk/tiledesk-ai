@@ -466,19 +466,35 @@ class TileTrainertorchFF:
         with torch.no_grad():
             vect = [text_pipeline(query_text)]
             text = torch.tensor([sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in vect])
-            print(text)
-            output = model_classifier(text)
+            logits_output = model_classifier(text)
             
-            predicted_class = output.argmax(1).item() 
-        
-        # Closing file
-        print(id2label[str(predicted_class)])
-    
-    #def predict(text, text_pipeline):
-    #    with torch.no_grad():
-    #        text = torch.tensor(text_pipeline(text))
-    #        output = model(text, torch.tensor([0]))
-    #        return output.argmax(1).item() + 1
+            pred_prob = torch.softmax(logits_output,dim=1)
+           
+            
+            
+            predicted_class = torch.argmax(pred_prob[0]).item()
+            predicted_prob = pred_prob[0][predicted_class].item() 
+            print(predicted_class, predicted_prob)
+            
+            #ciclo sulle classi ed ottengo le prob per ogni classee
+            
+            intent_r = []
+            for idx,classes_to_pred in enumerate(pred_prob[0]):
+                intent_r.append({"name":id2label[str(idx)],
+                                     "confidence": classes_to_pred.item() }) 
+                print(classes_to_pred.item())
+
+            #predicted_class = output.argmax(1).item() 
+            results_dict = {}
+            results_dict["text"]= query_text
+            results_dict["intent"]={"name":id2label[str(predicted_class)], 
+                                     "confidence": predicted_prob }
+            
+            results_dict["intent_ranking"] = sorted(intent_r, key=lambda d: d['confidence'], reverse=True) 
+            
+
+       
+        return id2label[str(predicted_class)], model_classifier, vocabll, results_dict
 
 class TileDataset(torch.utils.data.Dataset):
     def __init__(self, encodings, labels):

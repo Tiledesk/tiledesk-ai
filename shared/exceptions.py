@@ -1,5 +1,7 @@
 import json
-from typing import Optional, Text
+from typing import Optional, Text, Union, Any
+from http import HTTPStatus
+from cli import __version__
 
 import jsonschema
 
@@ -58,3 +60,33 @@ class ConnectionException(TileaiException):
     It's used by our broker and tracker store classes, when
     they can't connect to services like postgres, dynamoDB, mongo.
     """
+
+class ErrorResponse(Exception):
+    """Common exception to handle failing API requests."""
+
+    def __init__(
+        self,
+        status: Union[int, HTTPStatus],
+        reason: Text,
+        message: Text,
+        details: Any = None,
+    ) -> None:
+        """Creates error.
+
+        Args:
+            status: The HTTP status code to return.
+            reason: Short summary of the error.
+            message: Detailed explanation of the error.
+            details: Additional details which describe the error. Must be serializable.
+        """
+        self.error_info = {
+            "version": __version__,
+            "status": "error",
+            "message": message,
+            "reason": reason,
+            "details": details or {},
+            "code": status,
+        }
+        self.status = status
+        
+        super(ErrorResponse, self).__init__()

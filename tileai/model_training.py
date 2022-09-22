@@ -34,11 +34,9 @@ def train(nlu:"Text",
     
 
     #Leggo il file nlu
-    with open(nlu) as jsonFile:
-        jsonObject = json.load(jsonFile)
-        jsonFile.close()
+   
      
-    nlu_json =  jsonObject["nlu"]
+    nlu_json =  nlu["nlu"]
     train_texts=[]
     train_labels=[]
     intents=[]
@@ -91,8 +89,12 @@ def query(model, query_text):
     
     modelname =   model+"/model.bin"
     
+    
+
     tiletrainertorch = TileTrainertorchFF("it","dbmdz/bert-base-italian-xxl-cased", "dd",None)
-    tiletrainertorch.query(modelname, config, vocabulary, query_text)
+
+    label, model, vocab, result_dict = tiletrainertorch.query(modelname, config, vocabulary, query_text)
+    return label,result_dict
     
     
     
