@@ -10,3 +10,4 @@ datasets
 torch
 torchtext
 scikit-plot
+jsonschema
