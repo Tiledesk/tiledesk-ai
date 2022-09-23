@@ -7,7 +7,17 @@ This module uses a simple Feed Forward Network implemented using PyTorch (more t
 
 ### Install
 
+We recommend to install a python3 virtual env and install tiledesk-ai on it.
+ ```
+ pip install virtualenv
+ python3 -m venv <virtual-environment-name>
+ source /path-to-virtual-env/bin/activate
+ ```
+
+
 ```
+git clone https://github.com/Tiledesk/tiledesk-ai.git
+cd tiledesk-ai
 pip install -r requirements.txt
 ```
 
@@ -61,9 +71,33 @@ Default HTTP server port is 6006. You can change the port using the _-p port_ op
 ```
 
 ### Query from HTTP server
+To train your model from http server:
+```
+POST http://localhost:port/train
+```
+```json
+{
+	"configuration": {
+		"algo": "auto"
+	},
+	"nlu": [{	
+      "intent":"hello_intent",
+      "examples":["Hi","Hello", "..."]
+	},
 
+	]
+}
+```
+
+To query your model
 ```shell
-> http://localhost?query=who%20are%20you
+POST http://localhost:port/model/parse
+```
+```json
+{
+"model":"models/<name of the model>",
+  "text":"..."
+}
 ```
 
 ## APIs

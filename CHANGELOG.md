@@ -8,3 +8,6 @@
 
 ### 0.0.3 
 - add run command in order to start http server
+
+### 0.1
+- Feed Forward Network with word embedding

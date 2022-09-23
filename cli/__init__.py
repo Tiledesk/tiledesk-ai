@@ -3,7 +3,7 @@ import argparse
 import sys
 
 _program = "tileai"
-__version__ = "0.0.2"
+__version__ = "0.1"
 
 
 
