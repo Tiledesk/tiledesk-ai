@@ -64,15 +64,23 @@ def run_query(args: argparse.Namespace, can_exit: bool = False) -> Optional[Text
     
     #if training_result.code != 0 and can_exit:
     #    sys.exit(training_result.code)
-    
-    from tileai import query
-    import cli.utils
-    model = cli.utils.get_validated_path(
-        args.model, "model", "models/default", none_is_valid=True
-    )
-    query_text = args.text
-    #out = cli.utils.get_validated_path(
-    #    args.out, "out", "./models/", none_is_valid=True
-    #)
-    query(model, query_text)
+    try:
+        from tileai import query
+        import cli.utils
+        model = cli.utils.get_validated_path(
+            args.model, "model", "models/default", none_is_valid=True
+        )
+        query_text = args.text
+        #out = cli.utils.get_validated_path(
+        #    args.out, "out", "./models/", none_is_valid=True
+        #)
+        label, risult_dict = query(model, query_text)
+        print ("label: ",risult_dict["intent"]["name"], "- confidence: ", risult_dict["intent"]["confidence"])
+        print ("=================================")
+        print ("intent ranking")
+        for elem in risult_dict["intent_ranking"]:
+            print("\tlabel: ",elem["name"], "- confidence: ", elem["confidence"])
+
+    except Exception as e:
+            print(e)
     

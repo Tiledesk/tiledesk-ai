@@ -482,7 +482,7 @@ class TileTrainertorchFF:
             for idx,classes_to_pred in enumerate(pred_prob[0]):
                 intent_r.append({"name":id2label[str(idx)],
                                      "confidence": classes_to_pred.item() }) 
-                print(classes_to_pred.item())
+                #print(classes_to_pred.item())
 
             #predicted_class = output.argmax(1).item() 
             results_dict = {}
