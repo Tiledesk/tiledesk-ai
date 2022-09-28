@@ -9,7 +9,7 @@ import concurrent.futures
 
 from shared.exceptions import ErrorResponse
 
-
+import shared.const as const
 
 
 import aiohttp
@@ -148,6 +148,7 @@ def create_app(
                 
 
         nlu = request.json
+        modelpath = request.json["model"]
 
         try:
             with app.ctx.active_training_processes.get_lock():
@@ -155,8 +156,9 @@ def create_app(
 
             from tileai.model_training import train
 
+
             # pass `None` to run in default executor
-            training_result = train(nlu, "models/ciao")
+            training_result = train(nlu, const.MODEL_PATH_ROOT+modelpath)
 
             if training_result.model:
                 filename = os.path.basename(training_result.model)

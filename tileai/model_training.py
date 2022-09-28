@@ -37,6 +37,7 @@ def train(nlu:"Text",
    
      
     nlu_json =  nlu["nlu"]
+    algo = nlu["configuration"]["algo"]
     train_texts=[]
     train_labels=[]
     intents=[]
@@ -52,7 +53,7 @@ def train(nlu:"Text",
     if not os.path.exists(out):
         os.makedirs(out)
 
-    tiletrainertorch = TileTrainertorchFF("it","dbmdz/bert-base-italian-xxl-cased", "dd",None)
+    tiletrainertorch = TileTrainertorchFF("it",algo, "dd",None)
     state_dict, configdata, vocab = tiletrainertorch.train(train_texts, train_labels)
     torch.save (state_dict, out+"/model.bin")
 

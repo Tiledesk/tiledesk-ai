@@ -27,12 +27,12 @@ class EmbeddingClassifier(nn.Module):
         return self.seq(X_batch)
 
 class EmbeddingClassifierAverage(nn.Module):
-    def __init__(self,vocab, target_classes):
+    def __init__(self,vocab_size, n_target_classes):
         super(EmbeddingClassifierAverage, self).__init__()
-        self.word_embeddings = nn.Embedding(num_embeddings=len(vocab), embedding_dim=64)
+        self.word_embeddings = nn.Embedding(num_embeddings=vocab_size, embedding_dim=64)
         self.linear1 = nn.Linear(64, 128) ## 25 = embeding length, 50 = words we kept per sample
         self.linear2 = nn.Linear(128,64)
-        self.linear3 = nn.Linear(64, len(target_classes))
+        self.linear3 = nn.Linear(64, n_target_classes)
 
     def forward(self, X_batch):
         x = self.word_embeddings(X_batch)
@@ -64,9 +64,9 @@ class EmbeddingClassifierWBag(nn.Module):
 
 class TextClassificationModel(nn.Module):
 
-    def __init__(self, vocab, target_classes):
+    def __init__(self, vocab_size, n_target_classes):
         super(TextClassificationModel, self).__init__()
-        self.embedding = nn.EmbeddingBag(len(vocab), embedding_dim=512, sparse=True)
+        self.embedding = nn.EmbeddingBag(vocab_size, embedding_dim=512, sparse=True)
         
         self.lay1 = nn.Linear(512, 256)## 25 = embeding length, 50 = words we kept per sample
         self.relu1 = nn.ReLU()
@@ -74,7 +74,7 @@ class TextClassificationModel(nn.Module):
         self.la2 = nn.Linear(256, 128)
         self.relu2= nn.ReLU()
                 
-        self.fc = nn.Linear(128, len(target_classes))
+        self.fc = nn.Linear(128, n_target_classes)
 
         self.init_weights()
 
