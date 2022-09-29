@@ -5,7 +5,6 @@ import uuid
 import numpy as np
 import os
 
-from tileai.classifier.torch_classifiers import EmbeddingClassifier
 from tileai.TileTrainertorchFF import TileTrainertorchFF
 import torch
 
@@ -37,7 +36,13 @@ def train(nlu:"Text",
    
      
     nlu_json =  nlu["nlu"]
-    algo = nlu["configuration"]["algo"]
+    print(type(nlu))
+    if "configuration" not in nlu or "algo" not in nlu["configuration"]:
+        algo="feedforward"
+    else:
+        algo = nlu["configuration"]["algo"]
+    # Riga aggiunta per non avere errori sulla varibile
+    
     train_texts=[]
     train_labels=[]
     intents=[]
@@ -54,7 +59,7 @@ def train(nlu:"Text",
         os.makedirs(out)
 
     tiletrainertorch = TileTrainertorchFF("it",algo, "dd",None)
-    state_dict, configdata, vocab = tiletrainertorch.train(train_texts, train_labels)
+    state_dict, configdata, vocab, report = tiletrainertorch.train(train_texts, train_labels)
     torch.save (state_dict, out+"/model.bin")
 
     config_json = out+"/config.json"

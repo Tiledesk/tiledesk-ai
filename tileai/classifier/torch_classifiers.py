@@ -45,10 +45,10 @@ class EmbeddingClassifierAverage(nn.Module):
         return logits
 
 class EmbeddingClassifierWBag(nn.Module):
-    def __init__(self,vocab, target_classes):
+    def __init__(self,vocab_size, n_target_classes):
         super(EmbeddingClassifierWBag, self).__init__()
         self.seq = nn.Sequential(
-            nn.EmbeddingBag(num_embeddings=len(vocab), embedding_dim=64, mode="mean"),
+            nn.EmbeddingBag(num_embeddings=vocab_size, embedding_dim=64, mode="mean"),
 
             nn.Linear(64, 128), ## 25 = embeding length, 50 = words we kept per sample
             nn.ReLU(),
@@ -56,7 +56,7 @@ class EmbeddingClassifierWBag(nn.Module):
             nn.Linear(128, 64),
             nn.ReLU(),
 
-            nn.Linear(64, len(target_classes)),
+            nn.Linear(64, n_target_classes),
         )
 
     def forward(self, X_batch):

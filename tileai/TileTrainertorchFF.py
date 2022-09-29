@@ -88,8 +88,8 @@ class TileTrainertorchFF:
         loss_fn = nn.CrossEntropyLoss()
 
         #vedo l'algoritmo settato
-        if self.algo == "feedforward":
-            embed_classifier = EmbeddingClassifier(len(vocab), len(target_classes)).to(device)
+        if self.algo == "embeddingwbag":
+            embed_classifier = EmbeddingClassifierWBag(len(vocab), len(target_classes)).to(device)
         elif self.algo == "embeddigaverage":
             embed_classifier = EmbeddingClassifierAverage(len(vocab), len(target_classes)).to(device)
         else:
@@ -111,7 +111,9 @@ class TileTrainertorchFF:
         print("\nConfusion Matrix : ")
         print(confusion_matrix(Y_actual, Y_preds))
         print("\nClassification Report : ")
-        print(classification_report(Y_actual, Y_preds,  labels=np.unique(Y_preds)))#target_names=target_classes,
+        creport = classification_report(Y_actual, Y_preds,  labels=np.unique(Y_preds), output_dict=True)
+        print(classification_report(Y_actual, Y_preds,  labels=np.unique(Y_preds)))
+       
         
         id2label = {}
         label2id = {}
@@ -127,7 +129,7 @@ class TileTrainertorchFF:
         configuration["id2label"]=id2label
         configuration["label2id"] = label2id
         configuration["vocab_size"]=len(vocab)
-        print(configuration)
+        #print(configuration)
         
         # Print model's state_dict
         #print("Model's state_dict:")
@@ -140,112 +142,10 @@ class TileTrainertorchFF:
         #    print(var_name, "\t", optimizer.state_dict()[var_name])
 
         
-        return embed_classifier.state_dict(), configuration, vocab.get_itos()
+        return embed_classifier.state_dict(), configuration, vocab.get_itos(), creport
 
 
-    async def trainwbag(self, train_texts,train_labels):
-       
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        dataset = train_texts
-
-        label_encoder = LabelEncoder()
-        label_integer_encoded = label_encoder.fit_transform(train_labels)
-        print("integer encoded ",label_integer_encoded)          
-        # one hot encode labels
-
-
-        #onehot_encoder = OneHotEncoder(sparse=False)
-        #label_integer_encoded_reshaped = label_integer_encoded.reshape(len(label_integer_encoded), 1)
-        #label_one_hot_encoded = onehot_encoder.fit_transform(label_integer_encoded_reshaped)
-        
-        #train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_one_hot_encoded, test_size=.1)
-        train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.2)
-        print("=============================================================")
-        print(train_texts,train_labels)
-        print("============================================================")
-
-       
-        train_texts = zip(train_labels,train_texts )
-        
-        val_texts =zip(val_labels, val_texts)
-
-       
-        tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
-        vocabulary = self.build_vocab(dataset)
-        
-
-        vocab = build_vocab_from_iterator(vocabulary, specials=["<unk>"])
-        vocab.set_default_index(vocab["<unk>"])
-        
-        print("======== ", len(vocab))
-        
     
-        train_dataset, test_dataset = to_map_style_dataset(train_texts), to_map_style_dataset(val_texts)
-        target_classes = set(train_labels)
-        
-        def vectorize_batch(batch):
-            Y, X = list(zip(*batch))
-            X = [vocab(tokenizer(sample)) for sample in X]
-            X = [sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in X] ## Bringing all samples to 50 length. #50
-            return torch.tensor(X, dtype=torch.int32), torch.tensor(Y)        
-        
-        
-        """
-        def collate_batch(batch):
-            label_list, text_list, offsets = [], [], [0]
-            for (_label, _text) in batch:
-                label_list.append(label_pipeline(_label))
-                processed_text = torch.tensor(text_pipeline(_text), dtype=torch.int64)
-                text_list.append(processed_text)
-                offsets.append(processed_text.size(0))
-            label_list = torch.tensor(label_list, dtype=torch.int64)
-            offsets = torch.tensor(offsets[:-1]).cumsum(dim=0)
-            text_list = torch.cat(text_list)
-            return label_list.to(device), text_list.to(device), offsets.to(device) 
-        """
-
-        train_loader = DataLoader(train_dataset, batch_size=32, collate_fn=vectorize_batch) #1024
-        test_loader  = DataLoader(test_dataset, batch_size=32, collate_fn=vectorize_batch) #1024
-        
-        epochs = 200
-        learning_rate = 5e-4
-
-        loss_fn = nn.CrossEntropyLoss()
-        embed_classifier = EmbeddingClassifierWBag(vocab, target_classes)
-        optimizer = Adam(embed_classifier.parameters(), lr=learning_rate)
-
-        self.trainModel(embed_classifier, loss_fn, optimizer, train_loader, test_loader, epochs)
-
-        
-        Y_actual, Y_preds = self.makePredictions(embed_classifier, test_loader)
-        from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-
-        
-       
-
-        from sklearn.metrics import confusion_matrix
-        import scikitplot as skplt
-        import matplotlib.pyplot as plt
-        
-
-        skplt.metrics.plot_confusion_matrix([i for i in Y_actual], [i for i in Y_preds],
-            normalize=True,
-            title="Confusion Matrix",
-            cmap="Reds",
-            hide_zeros=True,
-            figsize=(5,5)
-            );
-        plt.xticks(rotation=90);
-        plt.show()
-
-
-        print("Test Accuracy : {}".format(accuracy_score(Y_actual, Y_preds)))
-        print("\nConfusion Matrix : ")
-        print(confusion_matrix(Y_actual, Y_preds))
-        print("\nClassification Report : ")
-        print(classification_report(Y_actual, Y_preds,  labels=np.unique(Y_preds)))#target_names=target_classes,
-
-        return "ok"
     
     
 
