@@ -36,7 +36,7 @@ def train(nlu:"Text",
    
      
     nlu_json =  nlu["nlu"]
-    print(type(nlu))
+   
     if "configuration" not in nlu or "algo" not in nlu["configuration"]:
         algo="feedforward"
     else:
