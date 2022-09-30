@@ -58,11 +58,20 @@ This command will install the in-place the program. You can edit the script file
 ```
 
 ### Train
-Defaults to local file named nlu.json
+To train the model use the *tileai* command.
+
+*tileai* command synthax:
 
 ```
-> tileai train [-f filepath] [-o output model]
+> tileai train [-f nlu_filepath] [-o model_file_path]
 ```
+
+*nlu_filepath* defaults to local */domain/nlu.json* file.
+
+Train example:
+
+> tileai train -f domain/nlu.json -o models/my_trained_model
+
 ### Query
 
 ```shell
