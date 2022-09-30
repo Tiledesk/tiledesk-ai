@@ -10,8 +10,8 @@ This module uses a simple Feed Forward Network implemented using PyTorch (more t
 We recommend to install a python3 virtual env and install tiledesk-ai on it.
  ```
  pip install virtualenv
- python3 -m venv <virtual-environment-name>
- source /path-to-virtual-env/bin/activate
+ python3 -m venv tileai
+ source ./tileai/bin/activate
  ```
 
 
