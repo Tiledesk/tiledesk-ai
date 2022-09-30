@@ -14,6 +14,14 @@ We recommend to install a python3 virtual env and install tiledesk-ai on it.
  source ./tileai/bin/activate
  ```
 
+Create your working folder:
+
+```
+mkdir tiledeskai
+cd tiledeskai
+```
+
+Now synchronize with the source repo:
 
 ```
 git clone https://github.com/Tiledesk/tiledesk-ai.git
