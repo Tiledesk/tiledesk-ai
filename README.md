@@ -29,14 +29,15 @@ cd tiledesk-ai
 pip install -r requirements.txt
 ```
 
-```
->python setup.py install
-```
 For developement, use:
 ```
 >python setup.py develop
 ```
-to install in-place the program. You can edit the script files and test them from the command line. 
+This command will install the in-place the program. You can edit the script files and test them from the command line.
+
+> NOTE **PRODUCTION ENVIRONMENT** If are not interested in customize the code to improve/modify the module you can just
+> use the production command
+> **python setup.py install**
 
 
 ### nlu.json
