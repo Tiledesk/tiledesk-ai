@@ -51,7 +51,7 @@ def create_app(
     endpoints: Optional[Text] = None,
 ) -> Sanic:
     """Class representing a Tileai HTTP server."""
-     
+    app = Sanic(name="tileai_server", configure_logging=True) 
     app.config.RESPONSE_TIMEOUT = response_timeout
     configure_cors(app, cors_origins)
 
@@ -163,7 +163,9 @@ def create_app(
             if training_result.model:
                 filename = os.path.basename(training_result.model)
                 print(filename)
-                return response.json({"model":training_result.model})
+                print(training_result.performanceindex)
+                return response.json({"model":training_result.model}) # da valutare se restituire parametri , "performance":training_result.performanceindex
+
             else:
                 raise ErrorResponse(
                     HTTPStatus.INTERNAL_SERVER_ERROR,

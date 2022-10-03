@@ -6,3 +6,6 @@ DEFAULT_SERVER_FORMAT = "{}://localhost:{}"
 DEFAULT_RESPONSE_TIMEOUT = 60 * 60  # 1 hour
 
 MODEL_PATH_ROOT="models/"
+MODEL_BIN = "model.bin"
+MODEL_CONFIG = "config.json"
+MODEL_VOC= "vocab.voc"

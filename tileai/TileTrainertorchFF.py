@@ -129,25 +129,8 @@ class TileTrainertorchFF:
         configuration["id2label"]=id2label
         configuration["label2id"] = label2id
         configuration["vocab_size"]=len(vocab)
-        #print(configuration)
-        
-        # Print model's state_dict
-        #print("Model's state_dict:")
-        #for param_tensor in embed_classifier.state_dict():
-        #    print(param_tensor, "\t", embed_classifier.state_dict()[param_tensor].size())
-
-        # Print optimizer's state_dict
-        #print("Optimizer's state_dict:")
-        #for var_name in optimizer.state_dict():
-        #    print(var_name, "\t", optimizer.state_dict()[var_name])
-
         
         return embed_classifier.state_dict(), configuration, vocab.get_itos(), creport
-
-
-    
-    
-    
 
 
 
@@ -249,14 +232,7 @@ class TileTrainertorchFF:
         #print(vocabll.get_itos())
         tokenizer = get_tokenizer("basic_english") 
 
-        #def vectorize_batch(batch):
-        #    Y, X = list(zip(*batch))
-        #    X = [vocabll(tokenizer(sample)) for sample in X]
-        #    X = [sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in X] ## Bringing all samples to 50 length. #50
-        #    return torch.tensor(X, dtype=torch.int32), torch.tensor(Y)   
-
-        #query_text_tensor = DataLoader(query_text, batch_size=32, collate_fn=vectorize_batch) #1024
-  
+          
         text_pipeline = lambda x: [vocabll[token] for token in tokenizer(x)]
 
         with torch.no_grad():
