@@ -10,10 +10,18 @@ This module uses a simple Feed Forward Network implemented using PyTorch (more t
 We recommend to install a python3 virtual env and install tiledesk-ai on it.
  ```
  pip install virtualenv
- python3 -m venv <virtual-environment-name>
- source /path-to-virtual-env/bin/activate
+ python3 -m venv tileai
+ source ./tileai/bin/activate
  ```
 
+Create your working folder:
+
+```
+mkdir tiledeskai
+cd tiledeskai
+```
+
+Now synchronize with the source repo:
 
 ```
 git clone https://github.com/Tiledesk/tiledesk-ai.git
@@ -21,14 +29,16 @@ cd tiledesk-ai
 pip install -r requirements.txt
 ```
 
-```
->python setup.py install
-```
 For developement, use:
 ```
 >python setup.py develop
 ```
-to install in-place the program. You can edit the script files and test them from the command line. 
+This command will install the in-place the program. You can edit the script files and test them from the command line.
+
+> **NOTE**: **PRODUCTION ENVIRONMENT** If are not interested in customize the code to improve/modify the module you can just
+> use the production command:
+>
+> **python setup.py install**
 
 
 ### nlu.json
@@ -48,11 +58,20 @@ to install in-place the program. You can edit the script files and test them fro
 ```
 
 ### Train
-Defaults to local file named nlu.json
+To train the model use the *tileai* command.
+
+*tileai* command synthax:
 
 ```
-> tileai train [-f filepath] [-o output model]
+> tileai train [-f nlu_filepath] [-o model_file_path]
 ```
+
+*nlu_filepath* defaults to local */domain/nlu.json* file.
+
+Train example:
+
+> tileai train -f domain/nlu.json -o models/my_trained_model
+
 ### Query
 
 ```shell
