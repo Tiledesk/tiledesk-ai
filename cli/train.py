@@ -75,8 +75,6 @@ def run_training(args: argparse.Namespace, can_exit: bool = False) -> Optional[T
         args.file, "file", "domain/nlu.json", none_is_valid=True
     )
     out = args.out
-    #out = cli.utils.get_validated_path(
-    #    args.out, "out", "./models/", none_is_valid=True
-    #)
+   
     result = train(nlu, out)
     return result.model

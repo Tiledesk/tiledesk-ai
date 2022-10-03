@@ -34,10 +34,9 @@ def create_argument_parser() -> argparse.ArgumentParser:
 
     
     run.add_subparser(subparsers, parents=parent_parsers)
-    #shell.add_subparser(subparsers, parents=parent_parsers)
     train.add_subparser(subparsers, parents=parent_parsers)
     query.add_subparser(subparsers, parents=parent_parsers)
-    #interactive.add_subparser(subparsers, parents=parent_parsers)
+    
 
     return parser
 def tileai_version() -> None:

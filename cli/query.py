@@ -71,9 +71,7 @@ def run_query(args: argparse.Namespace, can_exit: bool = False) -> Optional[Text
             args.model, "model", "models/default", none_is_valid=True
         )
         query_text = args.text
-        #out = cli.utils.get_validated_path(
-        #    args.out, "out", "./models/", none_is_valid=True
-        #)
+        
         label, risult_dict = query(model, query_text)
         print ("label: ",risult_dict["intent"]["name"], "- confidence: ", risult_dict["intent"]["confidence"])
         print ("=================================")

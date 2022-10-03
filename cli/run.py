@@ -28,15 +28,7 @@ def add_subparser(
     add_port_param(run_parser)
     run_parser.set_defaults(func=run_server)
 
-    #run_subparsers = run_parser.add_subparsers()
-    #sdk_subparser = run_subparsers.add_parser(
-    #    "actions",
-    #    parents=parents,
-    #    conflict_handler="resolve",
-    #    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    #    help="Runs the action server.",
-    #)
-    #sdk_subparser.set_defaults(func=run_actions)
+   
 
    
 def add_port_param(

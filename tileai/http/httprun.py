@@ -30,9 +30,7 @@ def configure_app(
 ) -> Sanic:
     """Run the agent."""
     #aggiunta del log per l'http server
-    #rasa.core.utils.configure_file_logging(
-    #    logger, log_file, use_syslog, syslog_address, syslog_port, syslog_protocol
-    #)
+   
 
     
     app = server.create_app(
@@ -43,14 +41,7 @@ def configure_app(
         )
   
 #Aggiungere la capacità di loggare vedi l'approccio di rasa
-    #if logger.isEnabledFor(logging.DEBUG):
-        #rasa.core.utils.list_routes(app)
-
-    #async def configure_async_logging() -> None:
-    #    if logger.isEnabledFor(logging.DEBUG):
-    #        rasa.utils.io.enable_async_loop_debugging(asyncio.get_event_loop())
-
-    #app.add_task(configure_async_logging)
+    
 
 
     return app
@@ -81,23 +72,9 @@ def serve_application(
     interface = shared.const.DEFAULT_SERVER_INTERFACE
 
     print(f"Starting Tileai server on {protocol}://{interface}:{port}")
-######
+
    
-    #app.register_listener(
-    #    partial(load_agent_on_start, model_path, endpoints, remote_storage),
-    #    "before_server_start",
-    #)
-    #app.register_listener(close_resources, "after_server_stop")
-
-    #number_of_workers = rasa.core.utils.number_of_sanic_workers(
-    #    endpoints.lock_store if endpoints else None
-    #)
-
     
-
-    #rasa.utils.common.update_sanic_log_level(
-    #    log_file, use_syslog, syslog_address, syslog_port, syslog_protocol
-    #)
     print(interface, port)
     app.run(
         host=interface,

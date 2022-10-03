@@ -51,7 +51,7 @@ def create_app(
     endpoints: Optional[Text] = None,
 ) -> Sanic:
     """Class representing a Tileai HTTP server."""
-    app = Sanic("tileai_server", configure_logging=True)
+     
     app.config.RESPONSE_TIMEOUT = response_timeout
     configure_cors(app, cors_origins)
 
@@ -204,16 +204,7 @@ def create_app(
             
             label, risult_dict = query(model, text) 
 
-            #try:
-            #    parsed_data = await app.ctx.agent.parse_message(data.get("text"))
-            #except Exception as e:
-            #    logger.debug(traceback.format_exc())
-            #    raise ErrorResponse(
-            #        HTTPStatus.BAD_REQUEST,
-            #        "ParsingError",
-            #        f"An unexpected error occurred. Error: {e}",
-            #    )
-            
+           
 
             return response.json(risult_dict)
 

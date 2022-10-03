@@ -1,6 +1,6 @@
 # required modules
 clint
-pandas>=1.4.3
+pandas
 Sanic>=22.3.2
 sanic_cors
 aiohttp>=3.8.1
