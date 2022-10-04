@@ -75,11 +75,11 @@ def serve_application(
 
    
     
-    print(interface, port)
     app.run(
         host=interface,
         port=int(port),
-        
+        debug=False,
+        auto_reload=False
         
     )
 
