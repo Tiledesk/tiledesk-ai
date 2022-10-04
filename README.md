@@ -3,7 +3,10 @@ Tiledesk Module for AI
 
 This module uses a simple Feed Forward Network implemented using PyTorch (more to come in the future) to understand the user intent.
 
+
 ## Use with the command line
+
+> NOTE: recommended Python version >= 3.9
 
 ### Install
 
