@@ -43,22 +43,36 @@ This command will install the in-place the program. You can edit the script file
 >
 > **python setup.py install**
 
+Use the **nlu.json** file to setup all intents train in your project.
 
-### nlu.json
+### nlu.json example
 
 ```json
 {
-	"configuration": {
-		"algo": "auto"
-	},
-	"nlu": [{	
+  "configuration": {
+    "algo": "auto"
+  },
+  "nlu": [
+    {	
       "intent":"hello_intent",
-      "examples":["Hi","Hello", "..."]
-	},
-
-	]
+      "examples":["Hi","Hello"]
+    },
+    {	
+      "intent":"goodbye_intent",
+      "examples":["goodbye","bye","good night"]
+    }
+  ]
 }
 ```
+
+Actually *configuration* parameter only takes this settings:
+
+```
+"configuration": {
+  "algo": "auto|embeddingwbag|feedforward"
+}
+```
+
 
 ### Train
 To train the model use the *tileai* command.
