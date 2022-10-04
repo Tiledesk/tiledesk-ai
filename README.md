@@ -43,7 +43,7 @@ This command will install the in-place the program. You can edit the script file
 >
 > **python setup.py install**
 
-Use the **nlu.json** file to setup all intents train in your project.
+Use the ./domain/**nlu.json** file to setup all intents train in your project.
 
 ### nlu.json example
 
