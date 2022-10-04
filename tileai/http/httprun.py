@@ -78,7 +78,7 @@ def serve_application(
     print(interface, port)
     app.run(
         host=interface,
-        port=port,
+        port=int(port),
         
         
     )
