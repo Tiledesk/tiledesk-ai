@@ -34,7 +34,7 @@ pip install -r requirements.txt
 
 For developement, use:
 ```
->python setup.py develop
+python setup.py develop
 ```
 This command will install the in-place the program. You can edit the script files and test them from the command line.
 
