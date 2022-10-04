@@ -95,6 +95,12 @@ Train example:
 > tileai query [-m model path] -t "question"
 ```
 
+Query example:
+
+```shell
+> tileai query -m models/my_trained_model -t "ciao"
+```
+
 ## HTTP server
 
 ### Run the HTTP server
