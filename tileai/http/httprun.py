@@ -89,7 +89,8 @@ def serve_application(
         debug=True,
         #dev=True,
         auto_reload=False,
-        workers=4
+        workers=1,
+        single_process=True
        
         
     
