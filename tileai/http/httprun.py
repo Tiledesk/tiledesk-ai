@@ -39,10 +39,13 @@ def configure_app(
         response_timeout=response_timeout,
         endpoints=endpoints,
         )
-  
-#Aggiungere la capacità di loggare vedi l'approccio di rasa
     
-
+    
+   
+  
+    #Aggiungere la capacità di loggare vedi l'approccio di rasa
+    
+    
 
     return app
 
@@ -58,7 +61,7 @@ def serve_application(
     
 ) -> None:
     
-    print(model_path)
+    #print(model_path)
     app = configure_app( 
         cors,
         auth_token,
@@ -67,6 +70,11 @@ def serve_application(
         endpoints=endpoints,
         request_timeout=request_timeout,
     )
+
+    #app.register_listener(
+    #    partial(load_agent_on_start, model_path, endpoints, remote_storage),
+    #    "before_server_start",
+    #)
 
     protocol = "http"
     interface = shared.const.DEFAULT_SERVER_INTERFACE
@@ -77,9 +85,14 @@ def serve_application(
     
     app.run(
         host=interface,
-        port=int(port),
-        debug=False,
-        auto_reload=False
+        port=port,
+        debug=True,
+        #dev=True,
+        auto_reload=False,
+        workers=4
+       
+        
+    
         
     )
 

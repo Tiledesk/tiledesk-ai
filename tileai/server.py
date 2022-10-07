@@ -18,6 +18,7 @@ from sanic import Sanic, response
 from sanic.request import Request
 from sanic.response import HTTPResponse
 from sanic_cors import CORS
+from sanic import Blueprint
 from http import HTTPStatus
 
 from typing import (
@@ -36,6 +37,50 @@ from typing import (
 
 logger = logging.getLogger(__name__)
 
+def configure_cors(
+    app: Sanic, cors_origins: Union[Text, List[Text], None] = ""
+) -> None:
+    """Configure CORS origins for the given app. Presa da RASA"""
+
+    # Workaround so that socketio works with requests from other origins.
+    # https://github.com/miguelgrinberg/python-socketio/issues/205#issuecomment-493769183
+    app.config.CORS_AUTOMATIC_OPTIONS = True
+    app.config.CORS_SUPPORTS_CREDENTIALS = True
+    app.config.CORS_EXPOSE_HEADERS = "filename"
+
+    CORS(
+        app, resources={r"/*": {"origins": cors_origins or ""}}, automatic_options=True
+    )
+
+def run_in_thread(f: Callable[..., Coroutine]) -> Callable:
+    """Decorator which runs request on a separate thread.
+
+    Some requests (e.g. training or cross-validation) are computional intense requests.
+    This means that they will block the event loop and hence the processing of other
+    requests. This decorator can be used to process these requests on a separate thread
+    to avoid blocking the processing of incoming requests.
+
+    Args:
+        f: The request handler function which should be decorated.
+
+    Returns:
+        The decorated function.
+    """
+
+    @wraps(f)
+    async def decorated_function(
+        request: Request, *args: Any, **kwargs: Any
+    ) -> HTTPResponse:
+        # Use a sync wrapper for our `async` function as `run_in_executor` only supports
+        # sync functions
+        def run() -> HTTPResponse:
+            return asyncio.run(f(request, *args, **kwargs))
+
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            return await request.app.loop.run_in_executor(pool, run)
+
+    return decorated_function
+
 def validate_request_body(request: Request, error_message: Text) -> None:
     """Check if `request` has a body."""
     if not request.body:
@@ -51,10 +96,15 @@ def create_app(
     endpoints: Optional[Text] = None,
 ) -> Sanic:
     """Class representing a Tileai HTTP server."""
-    app = Sanic(name="tileai_server", configure_logging=True) 
+
+    
+    app = Sanic(name="tileai_server") 
+   
     app.config.RESPONSE_TIMEOUT = response_timeout
     configure_cors(app, cors_origins)
 
+    add_root_route(app)
+   
     """
 
     # Setup the Sanic-JWT extension
@@ -80,7 +130,7 @@ def create_app(
             user_id="username",
         )
     """
-
+    
     
     # Initialize shared object of type unsigned int for tracking
     # the number of active training processes
@@ -93,12 +143,7 @@ def create_app(
     #    return response.json(exception.error_info, status=exception.status)
 
 
-    @app.get("/")
     
-    async def hello(request: Request) -> HTTPResponse:
-        """Check if the server is running and responds with the version."""
-        from cli import __version__
-        return response.text("Hello from Tileai: " + __version__)
 
 
     @app.get("/version")
@@ -218,50 +263,20 @@ def create_app(
                 f"An unexpected error occurred. Error: {e}",
             )
 
+    #async def notify_server_started_after_five_seconds():
+    #    await asyncio.sleep(5)
+        
+    #    print('Server successfully started!')
     
+    #app.add_task(notify_server_started_after_five_seconds())
 
     return app
+def add_root_route(app: Sanic) -> None:
+    """Add '/' route to return hello."""
 
-def configure_cors(
-    app: Sanic, cors_origins: Union[Text, List[Text], None] = ""
-) -> None:
-    """Configure CORS origins for the given app. Presa da RASA"""
+    @app.get("/")
+    async def hello(request: Request) -> HTTPResponse:
+        """Check if the server is running and responds with the version."""
+        from cli import __version__
+        return response.text("Hello from Tileai: " + __version__)
 
-    # Workaround so that socketio works with requests from other origins.
-    # https://github.com/miguelgrinberg/python-socketio/issues/205#issuecomment-493769183
-    app.config.CORS_AUTOMATIC_OPTIONS = True
-    app.config.CORS_SUPPORTS_CREDENTIALS = True
-    app.config.CORS_EXPOSE_HEADERS = "filename"
-
-    CORS(
-        app, resources={r"/*": {"origins": cors_origins or ""}}, automatic_options=True
-    )
-
-def run_in_thread(f: Callable[..., Coroutine]) -> Callable:
-    """Decorator which runs request on a separate thread.
-
-    Some requests (e.g. training or cross-validation) are computional intense requests.
-    This means that they will block the event loop and hence the processing of other
-    requests. This decorator can be used to process these requests on a separate thread
-    to avoid blocking the processing of incoming requests.
-
-    Args:
-        f: The request handler function which should be decorated.
-
-    Returns:
-        The decorated function.
-    """
-
-    @wraps(f)
-    async def decorated_function(
-        request: Request, *args: Any, **kwargs: Any
-    ) -> HTTPResponse:
-        # Use a sync wrapper for our `async` function as `run_in_executor` only supports
-        # sync functions
-        def run() -> HTTPResponse:
-            return asyncio.run(f(request, *args, **kwargs))
-
-        with concurrent.futures.ThreadPoolExecutor() as pool:
-            return await request.app.loop.run_in_executor(pool, run)
-
-    return decorated_function

@@ -1,24 +1,30 @@
 from typing import Any, Text, Dict, Union, List, Optional, TYPE_CHECKING
 import json
+import shared.utils
 
 if TYPE_CHECKING:
     from tileai.model_training import TrainingResult
 
 
-def run(port:5100):
+def run(**kwargs: "Dict[Text, Any]") -> None:
     
-    from tileai.http.httprun import serve_application
+    import tileai.http.httprun
+ 
 
+    
     _endpoints = "0.0.0.0"
     
-    kwargs = {}
-    serve_application(
+   
+    kwargs = shared.utils.minimal_kwargs(
+        kwargs, tileai.http.httprun.serve_application
+    )
+    tileai.http.httprun.serve_application(
         model_path="models/new",
         endpoints=_endpoints,
-        port=port,
+        #port=port,
         **kwargs
     )
-    print("RUN", port)
+    
 
 
 def train(nlu:"Text",
