@@ -9,8 +9,6 @@ if TYPE_CHECKING:
 def run(**kwargs: "Dict[Text, Any]") -> None:
     
     import tileai.core.http.httprun
- 
-    print("ciao")
     
     _endpoints = "0.0.0.0"
     
