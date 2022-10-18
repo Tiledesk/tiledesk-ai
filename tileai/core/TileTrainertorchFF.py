@@ -23,7 +23,7 @@ from torchtext.data import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator, Vocab, vocab
 from torchtext.data.functional import to_map_style_dataset
 
-from tileai.classifier.torch_classifiers import EmbeddingClassifier,EmbeddingClassifierAverage, EmbeddingClassifierWBag
+from tileai.core.classifier.torch_classifiers import EmbeddingClassifier,EmbeddingClassifierAverage, EmbeddingClassifierWBag
 
 logger = logging.getLogger(__name__)
 

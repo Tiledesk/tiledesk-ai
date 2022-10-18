@@ -1,4 +1,4 @@
-import shared.const
+import tileai.shared.const
 import logging
 import os
 
@@ -7,9 +7,9 @@ import multiprocessing
 from functools import reduce, wraps
 import concurrent.futures
 
-from shared.exceptions import ErrorResponse
+from tileai.shared.exceptions import ErrorResponse
 
-import shared.const as const
+import tileai.  shared.const as const
 
 
 import aiohttp
@@ -90,7 +90,7 @@ def create_app(
     
     cors_origins: Union[Text, List[Text], None] = "*",
     auth_token: Optional[Text] = None,
-    response_timeout: int = shared.const.DEFAULT_RESPONSE_TIMEOUT,
+    response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
     jwt_secret: Optional[Text] = None,
     #jwt_method: Text = "HS256",
     endpoints: Optional[Text] = None,
@@ -149,7 +149,7 @@ def create_app(
     @app.get("/version")
     async def version(request: Request) -> HTTPResponse:
         """Respond with the version number of the installed Tileai."""
-        from cli import __version__
+        from tileai.cli import __version__
         return response.json(
             {
                 "version": __version__,
@@ -199,7 +199,7 @@ def create_app(
             with app.ctx.active_training_processes.get_lock():
                 app.ctx.active_training_processes.value += 1
 
-            from tileai.model_training import train
+            from tileai.core.model_training import train
 
 
             # pass `None` to run in default executor
@@ -247,7 +247,7 @@ def create_app(
         text = request.json.get("text")
 
         try:
-            from tileai.model_training import query
+            from tileai.core.model_training import query
             
             label, risult_dict = query(model, text) 
 
@@ -277,6 +277,6 @@ def add_root_route(app: Sanic) -> None:
     @app.get("/")
     async def hello(request: Request) -> HTTPResponse:
         """Check if the server is running and responds with the version."""
-        from cli import __version__
+        from tileai.cli import __version__
         return response.text("Hello from Tileai: " + __version__)
 

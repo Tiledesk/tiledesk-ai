@@ -5,9 +5,9 @@ import uuid
 import numpy as np
 import os
 
-from tileai.TileTrainertorchFF import TileTrainertorchFF
+from tileai.core.TileTrainertorchFF import TileTrainertorchFF
 import torch
-import shared.const as const
+import tileai.shared.const as const
 
 logger = logging.getLogger(__name__)
 

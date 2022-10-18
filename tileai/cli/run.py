@@ -2,9 +2,9 @@ import argparse
 import logging
 import os
 from typing import List, Text, Union,Optional
-import shared.const
+import tileai.shared.const
 
-from cli import SubParsersAction
+from tileai.cli import SubParsersAction
 from tileai import run
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def add_port_param(
     """Specifies port param."""
     parser.add_argument(
         "-p","--port",
-        default=shared.const.DEFAULT_SERVER_PORT,
+        default=tileai.shared.const.DEFAULT_SERVER_PORT,
         type=int,
         help="Port for http server.",
     )
@@ -46,8 +46,6 @@ def run_server(args: argparse.Namespace) -> None:
    
     #print(args.port) 
     #run(args.port)
-    
-    
     run(**vars(args))
     return
    

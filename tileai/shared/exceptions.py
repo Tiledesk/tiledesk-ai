@@ -1,7 +1,7 @@
 import json
 from typing import Optional, Text, Union, Any
 from http import HTTPStatus
-from cli import __version__
+from tileai.cli import __version__
 
 import jsonschema
 

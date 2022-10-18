@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Dict, List, Optional, Text, TYPE_CHECKING, Union
 
-from cli import SubParsersAction
+from tileai.cli import SubParsersAction
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -70,8 +70,8 @@ def run_training(args: argparse.Namespace, can_exit: bool = False) -> Optional[T
     #    sys.exit(training_result.code)
     
     from tileai import train
-    import cli.utils
-    nlu = cli.utils.get_validated_path(
+    import tileai.cli.utils
+    nlu = tileai.cli.utils.get_validated_path(
         args.file, "file", "domain/nlu.json", none_is_valid=True
     )
     out = args.out

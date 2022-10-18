@@ -1,6 +1,6 @@
 from typing import Any, Text, Dict, Union, List, Optional, TYPE_CHECKING
 import json
-import shared.utils
+import tileai.shared.utils
 
 if TYPE_CHECKING:
     from tileai.model_training import TrainingResult
@@ -8,17 +8,17 @@ if TYPE_CHECKING:
 
 def run(**kwargs: "Dict[Text, Any]") -> None:
     
-    import tileai.http.httprun
+    import tileai.core.http.httprun
  
-
+    print("ciao")
     
     _endpoints = "0.0.0.0"
     
    
-    kwargs = shared.utils.minimal_kwargs(
-        kwargs, tileai.http.httprun.serve_application
+    kwargs = tileai.shared.utils.minimal_kwargs(
+        kwargs, tileai.core.http.httprun.serve_application
     )
-    tileai.http.httprun.serve_application(
+    tileai.core.http.httprun.serve_application(
         model_path="models/new",
         endpoints=_endpoints,
         #port=port,
@@ -30,7 +30,7 @@ def run(**kwargs: "Dict[Text, Any]") -> None:
 def train(nlu:"Text",
           out:"Text")-> "TrainingResult":
     
-    from tileai.model_training import train
+    from tileai.core.model_training import train
 
     with open(nlu) as jsonFile:
        jsonObject = json.load(jsonFile)
@@ -39,6 +39,6 @@ def train(nlu:"Text",
     return train(jsonObject,out)
 
 def query(model, query_text):
-    from tileai.model_training import query
+    from tileai.core.model_training import query
     return query(model, query_text)
 

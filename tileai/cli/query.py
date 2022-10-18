@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Dict, List, Optional, Text, TYPE_CHECKING, Union
 
-from cli import SubParsersAction
+from tileai.cli import SubParsersAction
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -66,8 +66,8 @@ def run_query(args: argparse.Namespace, can_exit: bool = False) -> Optional[Text
     #    sys.exit(training_result.code)
     try:
         from tileai import query
-        import cli.utils
-        model = cli.utils.get_validated_path(
+        import tileai.cli.utils
+        model = tileai.cli.utils.get_validated_path(
             args.model, "model", "models/default", none_is_valid=True
         )
         query_text = args.text

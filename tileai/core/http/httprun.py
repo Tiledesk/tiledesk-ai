@@ -7,8 +7,8 @@ from typing import Any, List, Optional, Text, Union, Dict
 
 
 
-import shared.const
-from tileai import server
+import tileai.shared.const
+from tileai.core import server
 
 
 from sanic import Sanic
@@ -22,8 +22,8 @@ logger = logging.getLogger()  # get the root logger
 def configure_app(
     cors: Optional[Union[Text, List[Text], None]] = None,
     auth_token: Optional[Text] = None,
-    response_timeout: int = shared.const.DEFAULT_RESPONSE_TIMEOUT,
-    port: int = shared.const.DEFAULT_SERVER_PORT,
+    response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
+    port: int = tileai.shared.const.DEFAULT_SERVER_PORT,
     endpoints: Optional[Text] = None,
     log_file: Optional[Text] = None,
     request_timeout: Optional[int] = None,
@@ -53,10 +53,10 @@ def configure_app(
 def serve_application(
     model_path: Optional[Text] = None,
     endpoints: Optional[Text] = None,
-    port: int = shared.const.DEFAULT_SERVER_PORT,
+    port: int = tileai.shared.const.DEFAULT_SERVER_PORT,
     cors: Optional[Union[Text, List[Text]]] = None,
     auth_token: Optional[Text] = None,
-    response_timeout: int = shared.const.DEFAULT_RESPONSE_TIMEOUT,
+    response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
     request_timeout: Optional[int] = None,
     
 ) -> None:
@@ -77,7 +77,7 @@ def serve_application(
     #)
 
     protocol = "http"
-    interface = shared.const.DEFAULT_SERVER_INTERFACE
+    interface = tileai.shared.const.DEFAULT_SERVER_INTERFACE
 
     print(f"Starting Tileai server on {protocol}://{interface}:{port}")
 
@@ -90,7 +90,7 @@ def serve_application(
         #dev=True,
         auto_reload=False,
         workers=1,
-        single_process=True
+        single_process=False
        
         
     

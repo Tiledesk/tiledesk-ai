@@ -2,10 +2,10 @@ import sys
 import os
 import argparse
 import logging
-from . import _program
+from tileai.cli import _program
 from clint.textui import puts, indent, colored
-from cli import train, query, run
-from shared.exceptions import TileaiException
+from tileai.cli import train, query, run
+from tileai.shared.exceptions import TileaiException
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ def tileai_version() -> None:
     """Prints version information of tileai"""
     from cli import __version__
     print(f"Tileai Version      :         {__version__}")
+
 
 def main(args = sys.argv[1:]):
     arg_parser = create_argument_parser()
