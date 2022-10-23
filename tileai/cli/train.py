@@ -4,9 +4,7 @@ import sys
 from typing import Dict, List, Optional, Text, TYPE_CHECKING, Union
 
 from tileai.cli import SubParsersAction
-
-if TYPE_CHECKING:
-    from pathlib import Path
+ 
 
 def add_subparser(
     subparsers: SubParsersAction, parents: List[argparse.ArgumentParser]

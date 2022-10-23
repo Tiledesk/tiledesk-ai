@@ -6,8 +6,6 @@ from typing import Any, Dict, List, Optional, TYPE_CHECKING, Text, Union, overlo
 import warnings
 
 
-if TYPE_CHECKING:
-    from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,6 @@
 import logging
 import sys
 
-from tileai.api import train, query, run
-
 
 # define the version before the other imports since these need it
 

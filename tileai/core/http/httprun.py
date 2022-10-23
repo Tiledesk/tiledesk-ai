@@ -8,7 +8,7 @@ from typing import Any, List, Optional, Text, Union, Dict
 
 
 import tileai.shared.const
-from tileai.core import server
+from tileai.core.http import server
 
 
 from sanic import Sanic
@@ -20,6 +20,7 @@ logger = logging.getLogger()  # get the root logger
 
 
 def configure_app(
+    app : Sanic = None,
     cors: Optional[Union[Text, List[Text], None]] = None,
     auth_token: Optional[Text] = None,
     response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
@@ -34,6 +35,7 @@ def configure_app(
 
     
     app = server.create_app(
+        app = app,
         cors_origins=cors,
         auth_token=auth_token,
         response_timeout=response_timeout,
@@ -51,6 +53,7 @@ def configure_app(
 
 
 def serve_application(
+    app : Sanic = None,
     model_path: Optional[Text] = None,
     endpoints: Optional[Text] = None,
     port: int = tileai.shared.const.DEFAULT_SERVER_PORT,
@@ -62,7 +65,8 @@ def serve_application(
 ) -> None:
     
     #print(model_path)
-    app = configure_app( 
+    app = configure_app(
+        app,
         cors,
         auth_token,
         response_timeout,
@@ -81,20 +85,17 @@ def serve_application(
 
     print(f"Starting Tileai server on {protocol}://{interface}:{port}")
 
-   
-    
+    # import multiprocessing
+    # workers = multiprocessing.cpu_count()
     app.run(
         host=interface,
         port=port,
         debug=True,
         #dev=True,
         auto_reload=False,
-        workers=1,
+        workers=4,
         single_process=False
        
-        
-    
-        
     )
 
 

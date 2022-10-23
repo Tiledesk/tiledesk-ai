@@ -3,7 +3,8 @@ import sys
 
 
 
-from tileai.api import train, query, run
+from tileai.api import train, query
+from tileai.httpapi import run
 
 
 # define the version before the other imports since these need it

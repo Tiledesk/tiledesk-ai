@@ -9,7 +9,7 @@ import concurrent.futures
 
 from tileai.shared.exceptions import ErrorResponse
 
-import tileai.  shared.const as const
+import tileai.shared.const as const
 
 
 import aiohttp
@@ -87,7 +87,7 @@ def validate_request_body(request: Request, error_message: Text) -> None:
         raise ErrorResponse(HTTPStatus.BAD_REQUEST, "BadRequest", error_message)
 
 def create_app(
-    
+    app : Sanic = None,
     cors_origins: Union[Text, List[Text], None] = "*",
     auth_token: Optional[Text] = None,
     response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
@@ -98,7 +98,7 @@ def create_app(
     """Class representing a Tileai HTTP server."""
 
     
-    app = Sanic(name="tileai_server") 
+    
    
     app.config.RESPONSE_TIMEOUT = response_timeout
     configure_cors(app, cors_origins)

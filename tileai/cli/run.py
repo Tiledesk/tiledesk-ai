@@ -5,7 +5,7 @@ from typing import List, Text, Union,Optional
 import tileai.shared.const
 
 from tileai.cli import SubParsersAction
-from tileai import run
+
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ def add_port_param(
     )
 
 def run_server(args: argparse.Namespace) -> None:
-   
+    from tileai import run
     #print(args.port) 
     #run(args.port)
     run(**vars(args))

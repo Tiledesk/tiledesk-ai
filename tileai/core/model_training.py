@@ -6,6 +6,7 @@ import numpy as np
 import os
 
 from tileai.core.TileTrainertorchFF import TileTrainertorchFF
+from tileai.core.TileTrainerBag import TileTrainertorchBag
 import torch
 import tileai.shared.const as const
 
@@ -60,8 +61,11 @@ def train(nlu:"Text",
     if not os.path.exists(out):
         os.makedirs(out)
 
-
-    tiletrainertorch = TileTrainertorchFF("it",algo, "dd",None)
+    if algo == "textclassifier":
+        tiletrainertorch = TileTrainertorchBag("it", algo, "", None)
+    else:
+        tiletrainertorch = TileTrainertorchFF("it",algo, "",None)
+    
     state_dict, configdata, vocab, report = tiletrainertorch.train(train_texts, train_labels)
     torch.save (state_dict, out+"/"+const.MODEL_BIN)
 
@@ -101,7 +105,7 @@ def query(model, query_text):
     
     
 
-    tiletrainertorch = TileTrainertorchFF("it","dbmdz/bert-base-italian-xxl-cased", "dd",None)
+    tiletrainertorch = TileTrainertorchFF("it","", "dd",None)
 
     label, model, vocab, result_dict = tiletrainertorch.query(modelname, config, vocabulary, query_text)
     return label,result_dict

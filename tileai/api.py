@@ -1,27 +1,8 @@
-from typing import Any, Text, Dict, Union, List, Optional, TYPE_CHECKING
+from typing import Any, Text, Dict, Union, List, Optional
 import json
 import tileai.shared.utils
 
-if TYPE_CHECKING:
-    from tileai.model_training import TrainingResult
 
-
-def run(**kwargs: "Dict[Text, Any]") -> None:
-    
-    import tileai.core.http.httprun
-    
-    _endpoints = "0.0.0.0"
-    
-   
-    kwargs = tileai.shared.utils.minimal_kwargs(
-        kwargs, tileai.core.http.httprun.serve_application
-    )
-    tileai.core.http.httprun.serve_application(
-        model_path="models/new",
-        endpoints=_endpoints,
-        #port=port,
-        **kwargs
-    )
     
 
 
