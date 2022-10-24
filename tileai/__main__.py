@@ -45,7 +45,7 @@ def tileai_version() -> None:
     print(f"Tileai Version      :         {__version__}")
 
 
-def main(args = sys.argv[1:]):
+def main():#args = sys.argv[1:]):
     arg_parser = create_argument_parser()
     cmdline_arguments = arg_parser.parse_args()
     sys.path.insert(1, os.getcwd())

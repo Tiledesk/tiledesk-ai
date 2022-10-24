@@ -87,6 +87,8 @@ ipython_config.py
 # Escludo i modelli creati
 models
 app.py
+setup.cfg
+pyproject.toml_ooo
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.

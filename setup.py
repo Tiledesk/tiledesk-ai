@@ -16,11 +16,11 @@ setup(name=_program,
       author='Gianluca Lorenzo',
       author_email='gianluca.lorenzo@gmail.com',
       license='MIT',
-      entry_points={'console_scripts':[
-                        str(_program)+'=tileai.__main__:main']
-      },
+      #entry_points={'console_scripts':[
+      #                  str(_program)+'=tileai.__main__:main']
+      #},
+      scripts= ['bin/tileai'],
       keywords=[],
       install_requires=required,
-      py_modules=['tileai.__main__'],
-      tests_require=['pytest', 'coveralls'],
-      zip_safe=False)
+      tests_require=['pytest', 'coveralls']
+      )
