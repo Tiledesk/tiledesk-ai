@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import glob
 import os
 
@@ -7,9 +7,10 @@ with open('requirements.txt') as f:
 
 from tileai.cli import __version__, _program
 
+
 setup(name=_program,
       version=__version__,
-      packages=['tileai','tileai.cli','tileai.core','tileai.shared'],
+      packages=find_packages(include=['tileai','tileai.*']),
       description='tiledesk ai',
       url='https://github.com/Tiledesk/tiledesk-ai',
       author='Gianluca Lorenzo',
@@ -19,5 +20,7 @@ setup(name=_program,
                         str(_program)+'=tileai.__main__:main']
       },
       keywords=[],
+      install_requires=required,
+      py_modules=['tileai.__main__'],
       tests_require=['pytest', 'coveralls'],
       zip_safe=False)
