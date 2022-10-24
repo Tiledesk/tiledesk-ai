@@ -2,8 +2,11 @@ from typing import Any, Text, Dict, Union, List, Optional
 import json
 from sanic import Sanic
 
+from tileai.core.http import server
 
-app = Sanic(name="tileai_server") 
+app = server.create_app()
+
+ 
 
 
 def run(**kwargs: "Dict[Text, Any]") -> None:

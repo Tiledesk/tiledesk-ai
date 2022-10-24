@@ -92,6 +92,8 @@ def train(nlu:"Text",
     
 def query(model, query_text):
     
+    ### TO FIX 
+    # Anche per la query è necessario verificare il tipo  di modello e creare l'istanza giusta per la preparazione del dato
     json_filename = model+"/"+const.MODEL_CONFIG
     jsonfile_config = open (json_filename, "r", encoding='utf-8')
     config = json.loads(jsonfile_config.read())

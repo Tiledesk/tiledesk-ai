@@ -65,15 +65,15 @@ def serve_application(
 ) -> None:
     
     #print(model_path)
-    app = configure_app(
-        app,
-        cors,
-        auth_token,
-        response_timeout,
-        port=port,
-        endpoints=endpoints,
-        request_timeout=request_timeout,
-    )
+    #app = configure_app(
+    #    app,
+    #    cors,
+    #    auth_token,
+    #    response_timeout,
+    #    port=port,
+    #    endpoints=endpoints,
+    #    request_timeout=request_timeout,
+    #)
 
     #app.register_listener(
     #    partial(load_agent_on_start, model_path, endpoints, remote_storage),

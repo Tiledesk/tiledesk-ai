@@ -99,7 +99,7 @@ def create_app(
 
     
     
-   
+    app = Sanic(name="tileai_server")
     app.config.RESPONSE_TIMEOUT = response_timeout
     configure_cors(app, cors_origins)
 
