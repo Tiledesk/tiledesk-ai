@@ -34,14 +34,14 @@ pip install -r requirements.txt
 
 For developement, use:
 ```
-python setup.py develop
+pip install -e .
 ```
 This command will install the in-place the program. You can edit the script files and test them from the command line.
 
 > **NOTE**: **PRODUCTION ENVIRONMENT** If are not interested in customize the code to improve/modify the module you can just
 > use the production command:
 >
-> **python setup.py install**
+> **pip install .**
 
 Use the ./domain/**nlu.json** file to setup all intents train in your project.
 
