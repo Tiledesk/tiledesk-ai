@@ -20,8 +20,8 @@ We recommend to install a python3 virtual env and install tiledesk-ai on it.
 Create your working folder:
 
 ```
-mkdir tiledeskai
-cd tiledeskai
+mkdir tiledesk-ai
+cd tiledesk-ai
 ```
 
 Now synchronize with the source repo:
