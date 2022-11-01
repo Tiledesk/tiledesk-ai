@@ -34,18 +34,23 @@ pip install -r requirements.txt
 
 Now you can choose between two alternatives.
 
-> **GO FOR PRODUCTION ENVIRONMENT** If you are not interested in customize the code to improve/modify the module you can just
-> use the production command:
->
+**PRODUCTION MODE**
+
+If you are not interested in customize the code to improve/modify the module you can just
+use the production command:
+
 > **pip install .**
 
 
-> **GO FOR DEVELOPMENT ENVIRONMENT** For developement (if you want to modify the source code), use:
-> ```
-> pip install -e .
-> ```
-> This command will install the in-place the program. You can edit the script files and test them from the command line.
+**DEVELOPMENT MODE**
 
+For developement (if you want to modify the source code), use:
+```
+pip install -e .
+```
+This command will install the in-place the program. You can edit the script files and test them from the command line.
+
+### Train
 
 Use the ./domain/**nlu.json** file to setup all intents train in your project.
 
