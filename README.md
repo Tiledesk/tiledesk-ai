@@ -82,9 +82,7 @@ Actually *configuration* parameter only takes this settings:
 }
 ```
 
-
-### Train
-To train the model use the *tileai* command.
+To **train the model** use the *tileai* command.
 
 *tileai* command synthax:
 
@@ -94,7 +92,7 @@ To train the model use the *tileai* command.
 
 *nlu_filepath* defaults to local */domain/nlu.json* file.
 
-Train example:
+Example:
 
 > tileai train -f domain/nlu.json -o models/my_trained_model
 
