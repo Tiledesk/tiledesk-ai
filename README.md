@@ -39,7 +39,7 @@ Now you can choose between two alternatives.
 If you are not interested in customize the code to improve/modify the module you can just
 use the production command:
 
-> **pip install .**
+> pip install .
 
 
 **DEVELOPMENT MODE**
