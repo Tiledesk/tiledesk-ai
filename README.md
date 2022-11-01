@@ -32,16 +32,20 @@ cd tiledesk-ai
 pip install -r requirements.txt
 ```
 
-For developement, use:
-```
-pip install -e .
-```
-This command will install the in-place the program. You can edit the script files and test them from the command line.
+Now you can choose between two alternatives.
 
-> **NOTE**: **PRODUCTION ENVIRONMENT** If are not interested in customize the code to improve/modify the module you can just
+> **GO FOR PRODUCTION ENVIRONMENT** If you are not interested in customize the code to improve/modify the module you can just
 > use the production command:
 >
 > **pip install .**
+
+
+> **GO FOR DEVELOPMENT ENVIRONMENT** For developement (if you want to modify the source code), use:
+> ```
+> pip install -e .
+> ```
+> This command will install the in-place the program. You can edit the script files and test them from the command line.
+
 
 Use the ./domain/**nlu.json** file to setup all intents train in your project.
 
