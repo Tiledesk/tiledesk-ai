@@ -40,10 +40,10 @@ def train(nlu:"Text",
      
     nlu_json =  nlu["nlu"]
    
-    if "configuration" not in nlu or "algo" not in nlu["configuration"]:
-        algo="feedforward"
+    if "configuration" not in nlu or "pipeline" not in nlu["configuration"]:
+        pipeline="feedforward"
     else:
-        algo = nlu["configuration"]["algo"]
+        pipeline = nlu["configuration"]["pipeline"]
     # Riga aggiunta per non avere errori sulla varibile
     
     train_texts=[]
@@ -61,10 +61,10 @@ def train(nlu:"Text",
     if not os.path.exists(out):
         os.makedirs(out)
 
-    if algo == "textclassifier":
-        tiletrainertorch = TileTrainertorchBag("it", algo, "", None)
+    if pipeline == "textclassifier":
+        tiletrainertorch = TileTrainertorchBag("it", pipeline, "", None)
     else:
-        tiletrainertorch = TileTrainertorchFF("it",algo, "",None)
+        tiletrainertorch = TileTrainertorchFF("it",pipeline, "",None)
     
     state_dict, configdata, vocab, report = tiletrainertorch.train(train_texts, train_labels)
     torch.save (state_dict, out+"/"+const.MODEL_BIN)

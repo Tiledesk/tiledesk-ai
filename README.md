@@ -59,7 +59,7 @@ Use the ./domain/**nlu.json** file to setup all intents train in your project.
 ```json
 {
   "configuration": {
-    "algo": "auto"
+    "pipeline": "auto"
   },
   "nlu": [
     {	
