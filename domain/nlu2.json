@@ -1,7 +1,7 @@
 {
     "configuration":{
       "language":"it",
-      "algo":"embeddigaverage"
+      "pipeline":"embeddigaverage"
     },
     "language":"it",
     "model":"urp",

@@ -1,7 +1,7 @@
 {
     "configuration":{
       "language":"it",
-      "algo":"embeddingwbag"
+      "pipeline":"embeddingwbag"
     },
     "language":"it",
     "model":"urp",
