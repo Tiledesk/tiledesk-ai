@@ -1,10 +1,10 @@
 {
     "configuration":{
       "language":"it",
-      "pipeline":["embeddigaverage"]
+      "pipeline":["textclassifier"]
     },
     "language":"it",
-    "model":"embeddigaverage",
+    "model":"textclassifier",
     "nlu":[{
       "intent":"saluti",
       "examples":["ciao","buongiorno", "buona giornata", "salve", "buondì", "buon giorno", "ben trovato"]

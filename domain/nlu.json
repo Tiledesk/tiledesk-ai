@@ -1,7 +1,7 @@
 {
     "configuration":{},
     "language":"it",
-    "model":"urp",
+    "model":"feedforward",
     "nlu":[{
       "intent":"saluti",
       "examples":["ciao","buongiorno", "buona giornata", "salve", "buondì", "buon giorno", "ben trovato"]

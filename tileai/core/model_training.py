@@ -5,10 +5,11 @@ import uuid
 import numpy as np
 import os
 
-from tileai.core.TileTrainertorchFF import TileTrainertorchFF
-from tileai.core.TileTrainerBag import TileTrainertorchBag
+#from tileai.core.TileTrainertorchFF import TileTrainertorchFF
+#from tileai.core.TileTrainerBag import TileTrainertorchBag
 import torch
 import tileai.shared.const as const
+from tileai.core.tiletrainer import TileTrainerFactory
 
 logger = logging.getLogger(__name__)
 
@@ -61,11 +62,15 @@ def train(nlu:"Text",
     if not os.path.exists(out):
         os.makedirs(out)
 
-    if pipeline == "textclassifier":
-        tiletrainertorch = TileTrainertorchBag("it", pipeline, "", None)
-    else:
-        tiletrainertorch = TileTrainertorchFF("it",pipeline, "",None)
-    
+    #if pipeline[0] == "textclassifier":
+    #    tiletrainertorch = TileTrainertorchBag("it", pipeline, "", None)
+    #else:
+    #    tiletrainertorch = TileTrainertorchFF("it",pipeline, "",None)
+
+    tiletrainerfactory = TileTrainerFactory()
+    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",None )
+ 
+
     state_dict, configdata, vocab, report = tiletrainertorch.train(train_texts, train_labels)
     torch.save (state_dict, out+"/"+const.MODEL_BIN)
 
@@ -105,9 +110,12 @@ def query(model, query_text):
     
     modelname =   model+"/"+const.MODEL_BIN
     
-    
+    pipeline= config["pipeline"]
 
-    tiletrainertorch = TileTrainertorchFF("it","", "dd",None)
+    tiletrainerfactory = TileTrainerFactory()
+    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",None )
+
+    #tiletrainertorch = TileTrainertorchFF("it","", "dd",None)
 
     label, model, vocab, result_dict = tiletrainertorch.query(modelname, config, vocabulary, query_text)
     return label,result_dict

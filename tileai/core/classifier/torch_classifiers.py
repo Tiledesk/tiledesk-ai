@@ -66,12 +66,12 @@ class TextClassificationModel(nn.Module):
 
     def __init__(self, vocab_size, n_target_classes):
         super(TextClassificationModel, self).__init__()
-        self.embedding = nn.EmbeddingBag(vocab_size, embedding_dim=512, sparse=True)
+        self.embedding = nn.EmbeddingBag(vocab_size, embedding_dim=64)#, sparse=True)
         
-        self.lay1 = nn.Linear(512, 256)## 25 = embeding length, 50 = words we kept per sample
+        self.lay1 = nn.Linear(64, 512)## 25 = embeding length, 50 = words we kept per sample
         self.relu1 = nn.ReLU()
 
-        self.la2 = nn.Linear(256, 128)
+        self.la2 = nn.Linear(512, 128)
         self.relu2= nn.ReLU()
                 
         self.fc = nn.Linear(128, n_target_classes)

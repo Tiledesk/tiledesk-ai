@@ -24,18 +24,20 @@ from torchtext.vocab import build_vocab_from_iterator, Vocab, vocab
 from torchtext.data.functional import to_map_style_dataset
 
 from tileai.core.classifier.torch_classifiers import EmbeddingClassifier,EmbeddingClassifierAverage, EmbeddingClassifierWBag
+from tileai.core.abstract_tiletrainer import TileTrainer
 
 logger = logging.getLogger(__name__)
 
-class TileTrainertorchFF:
+
+class TileTrainertorchAverage(TileTrainer):
 
     """
     
     """    
 
-    def __init__(self, language, algo, parameters, model):
+    def __init__(self, language, pipeline, parameters, model):
         self.language=language
-        self.algo=algo
+        self.pipeline=pipeline
         self.parameters=parameters
         self.model = model
           
@@ -88,12 +90,12 @@ class TileTrainertorchFF:
         loss_fn = nn.CrossEntropyLoss()
 
         #vedo l'algoritmo settato
-        if self.algo == "embeddingwbag":
-            embed_classifier = EmbeddingClassifierWBag(len(vocab), len(target_classes)).to(device)
-        elif self.algo == "embeddigaverage":
-            embed_classifier = EmbeddingClassifierAverage(len(vocab), len(target_classes)).to(device)
-        else:
-            embed_classifier = EmbeddingClassifier(len(vocab), len(target_classes)).to(device)
+        #if self.pipeline[0] == "embeddingwbag":
+        embed_classifier = EmbeddingClassifierWBag(len(vocab), len(target_classes)).to(device)
+        #elif self.pipeline[0] == "embeddigaverage":
+        #    embed_classifier = EmbeddingClassifierAverage(len(vocab), len(target_classes)).to(device)
+        #else:
+        #    embed_classifier = EmbeddingClassifier(len(vocab), len(target_classes)).to(device)
 
         optimizer = Adam(embed_classifier.parameters(), lr=learning_rate)
 
@@ -124,6 +126,7 @@ class TileTrainertorchFF:
 
 
         configuration = {}
+        configuration["pipeline"] = self.pipeline
         configuration["class"]=type(embed_classifier).__name__
         configuration["module"]=type(embed_classifier).__module__
         configuration["id2label"]=id2label
@@ -237,7 +240,9 @@ class TileTrainertorchFF:
 
         with torch.no_grad():
             vect = [text_pipeline(query_text)]
-            text = torch.tensor([sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in vect])
+            #text = torch.tensor([sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in vect])
+            
+            text = torch.tensor(vect)
             logits_output = model_classifier(text)
             
             pred_prob = torch.softmax(logits_output,dim=1)
