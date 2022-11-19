@@ -24,7 +24,9 @@ import time
 
 import importlib
 import logging
+
 from tileai.core.abstract_tiletrainer import TileTrainer
+from tileai.shared import const
 
 
 logger = logging.getLogger(__name__)
@@ -163,14 +165,33 @@ class TileTrainertorchBag(TileTrainer):
 
 
         configuration = {}
+        configuration["language"] = self.language
         configuration["pipeline"] = self.pipeline
         configuration["class"]=type(embed_classifier).__name__
         configuration["module"]=type(embed_classifier).__module__
         configuration["id2label"]=id2label
         configuration["label2id"] = label2id
         configuration["vocab_size"]=len(vocab)
+
+        torch.save (embed_classifier.state_dict(), self.model+"/"+const.MODEL_BIN)
+
+        config_json = self.model+"/"+const.MODEL_CONFIG
+        vocab_file = self.model+"/"+const.MODEL_VOC
+        print(config_json)
+    
+        with open(config_json, 'w', encoding='utf-8') as f:
+            json.dump(configuration, f, ensure_ascii=False, indent=4)
+    
+        f.close()
+        print(vocab)
+        with open(vocab_file, 'w', encoding='utf-8') as f_v:
+            for vb in vocab.get_itos():
+                f_v.write(vb)
+                f_v.write("\n")
+           
+        f_v.close()
         
-        return embed_classifier.state_dict(), configuration, vocab.get_itos(), creport
+        return creport
     
    
 
@@ -277,11 +298,18 @@ class TileTrainertorchBag(TileTrainer):
 
         return Y_shuffled.detach().numpy(), F.softmax(Y_preds, dim=-1).argmax(dim=-1).detach().numpy()
     
-    def query(self, model_file,configuration, vocabulary,query_text):
+    def query(self, configuration,query_text):
         
+       
+
+        vocabulary = []
+        vocab_file = self.model+"/"+const.MODEL_VOC
+        vocabulary = open (vocab_file, "r",  encoding='utf-8').read().splitlines()
+    
+        model_file =   self.model+"/"+const.MODEL_BIN
         
         for i in configuration:
-            
+            language = configuration["language"]
             embed_class = configuration["class"]
             embed_module = configuration["module"]
             id2label = configuration["id2label"]
@@ -348,5 +376,5 @@ class TileTrainertorchBag(TileTrainer):
             
 
        
-        return id2label[str(predicted_class)], model_classifier, vocabll, results_dict
+        return id2label[str(predicted_class)], results_dict
 

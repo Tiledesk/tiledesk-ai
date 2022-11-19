@@ -7,5 +7,7 @@ DEFAULT_RESPONSE_TIMEOUT = 60 * 60  # 1 hour
 
 MODEL_PATH_ROOT="models/"
 MODEL_BIN = "model.bin"
-MODEL_CONFIG = "config.json"
+MODEL_CONFIG = "tileai.json"
+#MODEL_LABEL_CONFIG = "label.json"
 MODEL_VOC= "vocab.voc"
+MODEL_CACHE_TRANSFORMERS = "./models/trasformer_cache"

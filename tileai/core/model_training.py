@@ -7,7 +7,7 @@ import os
 
 #from tileai.core.TileTrainertorchFF import TileTrainertorchFF
 #from tileai.core.TileTrainerBag import TileTrainertorchBag
-import torch
+
 import tileai.shared.const as const
 from tileai.core.tiletrainer import TileTrainerFactory
 
@@ -46,6 +46,11 @@ def train(nlu:"Text",
     else:
         pipeline = nlu["configuration"]["pipeline"]
     # Riga aggiunta per non avere errori sulla varibile
+
+    if "configuration" not in nlu or "language" not in nlu["configuration"]:
+        language=""
+    else:
+        language = nlu["configuration"]["language"]
     
     train_texts=[]
     train_labels=[]
@@ -68,30 +73,11 @@ def train(nlu:"Text",
     #    tiletrainertorch = TileTrainertorchFF("it",pipeline, "",None)
 
     tiletrainerfactory = TileTrainerFactory()
-    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",None )
+    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],language,pipeline, "",model=out )
  
-
-    state_dict, configdata, vocab, report = tiletrainertorch.train(train_texts, train_labels)
-    torch.save (state_dict, out+"/"+const.MODEL_BIN)
-
-    config_json = out+"/"+const.MODEL_CONFIG
-    vocab_file = out+"/"+const.MODEL_VOC
-    print(config_json)
+    report = tiletrainertorch.train(train_texts, train_labels)
     
-   
-
-    with open(config_json, 'w', encoding='utf-8') as f:
-        json.dump(configdata, f, ensure_ascii=False, indent=4)
-    
-    f.close()
-    print(vocab)
-    with open(vocab_file, 'w', encoding='utf-8') as f_v:
-        for vb in vocab:
-            f_v.write(vb)
-            f_v.write("\n")
-           
-    f_v.close()
-    
+        
        
     return TrainingResult(str(out), 0, report)
     
@@ -104,20 +90,18 @@ def query(model, query_text):
     config = json.loads(jsonfile_config.read())
     jsonfile_config.close()
 
-    vocabulary = []
-    vocab_file = model+"/"+const.MODEL_VOC
-    vocabulary = open (vocab_file, "r",  encoding='utf-8').read().splitlines()
     
-    modelname =   model+"/"+const.MODEL_BIN
+    
+    
     
     pipeline= config["pipeline"]
 
     tiletrainerfactory = TileTrainerFactory()
-    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",None )
+    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",model )
 
     #tiletrainertorch = TileTrainertorchFF("it","", "dd",None)
 
-    label, model, vocab, result_dict = tiletrainertorch.query(modelname, config, vocabulary, query_text)
+    label, result_dict = tiletrainertorch.query(config,  query_text)
     return label,result_dict
     
     
