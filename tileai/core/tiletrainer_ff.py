@@ -23,7 +23,10 @@ from torchtext.data import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator, Vocab, vocab
 from torchtext.data.functional import to_map_style_dataset
 
-from tileai.core.classifier.torch_classifiers import EmbeddingClassifier,EmbeddingClassifierAverage, EmbeddingClassifierWBag
+from tileai.core.classifier.torch_classifiers import EmbeddingClassifierAverage
+from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
+
+
 
 logger = logging.getLogger(__name__)
 from tileai.core.abstract_tiletrainer import TileTrainer
@@ -64,7 +67,8 @@ class TileTrainertorchFF(TileTrainer):
         val_texts =zip(val_labels, val_texts)
     
 
-        tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
+        #tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
+        tokenizer = StandarTokenizer()
         vocabulary = self.build_vocab(dataset)
         
 
@@ -77,7 +81,7 @@ class TileTrainertorchFF(TileTrainer):
         
         def vectorize_batch(batch):
             Y, X = list(zip(*batch))
-            X = [vocab(tokenizer(sample)) for sample in X]
+            X = [vocab(tokenizer.tokenize(sample)) for sample in X]
             X = [sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in X] ## Bringing all samples to 50 length. #50
             return torch.tensor(X, dtype=torch.int32).to(device), torch.tensor(Y).to(device)        
         
@@ -153,11 +157,7 @@ class TileTrainertorchFF(TileTrainer):
         f_v.close()
         
         return creport
-
-
-
-    def tokenizer(self, inp_str): ## This method is one way of creating tokenizer that looks for word tokens
-        return re.findall(r"\w+", inp_str)
+    
 
     def build_vocab(self,datasets):
         tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch

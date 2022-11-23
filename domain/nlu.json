@@ -1,5 +1,8 @@
 {
-    "configuration":{},
+    "configuration":{
+      "language":"it",
+      "pipeline":["ff"]
+    },
     "language":"it",
     "model":"feedforward",
     "nlu":[{

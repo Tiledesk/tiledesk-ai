@@ -5,8 +5,7 @@ import uuid
 import numpy as np
 import os
 
-#from tileai.core.TileTrainertorchFF import TileTrainertorchFF
-#from tileai.core.TileTrainerBag import TileTrainertorchBag
+
 
 import tileai.shared.const as const
 from tileai.core.tiletrainer import TileTrainerFactory

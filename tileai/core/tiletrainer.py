@@ -1,10 +1,10 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 
-from tileai.core.TileTrainertorch_ff import TileTrainertorchFF
-from tileai.core.TileTrainertorch_wbag import TileTrainertorchWBag
-from tileai.core.TileTrainertorch_average import TileTrainertorchAverage
-from tileai.core.TileTrainerBag import TileTrainertorchBag
+from tileai.core.tiletrainer_ff import TileTrainertorchFF
+from tileai.core.tiletrainer_wbag import TileTrainertorchWBag
+from tileai.core.tiletrainer_average import TileTrainertorchAverage
+from tileai.core.tiletrainer_bag import TileTrainertorchBag
 from tileai.core.tiletrainer_bert import TileTrainertorchBert
 
 
