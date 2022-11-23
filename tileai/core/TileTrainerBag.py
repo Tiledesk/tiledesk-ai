@@ -260,8 +260,7 @@ class TileTrainertorchBag(TileTrainer):
                 total_count += label.size(0)
         return total_acc/total_count, losses_
     
-    def tokenizer(self, inp_str): ## This method is one way of creating tokenizer that looks for word tokens
-        return re.findall(r"\w+", inp_str)
+    
 
     def build_vocab(self,datasets):
         tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
