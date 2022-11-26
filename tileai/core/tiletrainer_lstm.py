@@ -23,7 +23,7 @@ from torchtext.data import get_tokenizer
 from torchtext.vocab import build_vocab_from_iterator, Vocab, vocab
 from torchtext.data.functional import to_map_style_dataset
 
-from tileai.core.classifier.torch_classifiers import EmbeddingClassifier
+from tileai.core.classifier.torch_classifiers import LSTMClassificationModel
 from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
 
 from tileai.core.abstract_tiletrainer import TileTrainer
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 #EmbeddingClassifier 
 
-class TileTrainertorchFF(TileTrainer):
+class TileTrainertorchLSTM(TileTrainer):
 
     """
     
@@ -83,8 +83,12 @@ class TileTrainertorchFF(TileTrainer):
         def vectorize_batch(batch):
             Y, X = list(zip(*batch))
             X = [vocab(tokenizer.tokenize(sample)) for sample in X]
+            
             X = [sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in X] ## Bringing all samples to 20 length. #50
-            return torch.tensor(X, dtype=torch.int32).to(device), torch.tensor(Y).to(device)        
+            lenx = [len(sample) for sample in X]
+            
+            
+            return torch.tensor(X, dtype=torch.int32).to(device), torch.tensor(Y).to(device),torch.tensor(lenx, dtype=torch.int64).to(device)       
         
         train_loader = DataLoader(train_dataset, batch_size=32, collate_fn=vectorize_batch) #1024
         test_loader  = DataLoader(test_dataset, batch_size=32, collate_fn=vectorize_batch) #1024
@@ -94,9 +98,11 @@ class TileTrainertorchFF(TileTrainer):
 
         loss_fn = nn.CrossEntropyLoss()
 
-        embed_classifier = EmbeddingClassifier(len(vocab), len(target_classes)).to(device)
+        embed_classifier = LSTMClassificationModel(len(vocab), len(target_classes)).to(device)
 
         optimizer = Adam(embed_classifier.parameters(), lr=learning_rate)
+        for x,y,z in train_loader:
+            print(x,y,z)
 
         self.trainModel(embed_classifier, loss_fn, optimizer, train_loader, test_loader, epochs)
 
@@ -178,8 +184,8 @@ class TileTrainertorchFF(TileTrainer):
     def calcValLossAndAccuracy(self,model, loss_fn, val_loader):
         with torch.no_grad():
             Y_shuffled, Y_preds, losses = [],[],[]
-            for X, Y in val_loader:
-                preds = model(X)
+            for X, Y, lenx in val_loader:
+                preds = model(X,lenx)
                 loss = loss_fn(preds, Y)
                 losses.append(loss.item())
 
@@ -196,8 +202,10 @@ class TileTrainertorchFF(TileTrainer):
     def trainModel(self, model, loss_fn, optimizer, train_loader, val_loader, epochs=10):
         for i in range(1, epochs+1):
             losses = []
-            for X, Y in tqdm(train_loader):
-                Y_preds = model(X)
+          
+            for X, Y, LenX in tqdm(train_loader):
+                
+                Y_preds = model(X,LenX)
 
                 loss = loss_fn(Y_preds, Y)
                 losses.append(loss.item())
@@ -211,8 +219,8 @@ class TileTrainertorchFF(TileTrainer):
     
     def makePredictions(self, model, loader):
         Y_shuffled, Y_preds = [], []
-        for X, Y in loader:
-            preds = model(X)
+        for X, Y, lenx in loader:
+            preds = model(X,lenx)
             Y_preds.append(preds)
             Y_shuffled.append(Y)
         gc.collect()
@@ -222,7 +230,7 @@ class TileTrainertorchFF(TileTrainer):
 
 
     def query(self, configuration, query_text):
-        
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         vocabulary = []
         vocab_file = self.model+"/"+const.MODEL_VOC
         vocabulary = open (vocab_file, "r",  encoding='utf-8').read().splitlines()
@@ -259,9 +267,13 @@ class TileTrainertorchFF(TileTrainer):
         
         with torch.no_grad():
             vect = [text_pipeline(query_text)]
+            
             ### padding o tronco se il testo è troppo lungo
-            text = torch.tensor([sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in vect])
-            logits_output = model_classifier(text)
+            text = torch.tensor([sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in vect]).to(device)
+
+            lenx = torch.tensor([len(vect)], dtype=torch.int64).to(device)  
+            
+            logits_output = model_classifier(text,lenx)
             
             pred_prob = torch.softmax(logits_output,dim=1)
            

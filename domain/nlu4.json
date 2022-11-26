@@ -1,0 +1,56 @@
+{
+    "configuration":{
+      "language":"it",
+      "pipeline":["lstm"]
+    },
+    "language":"it",
+    "model":"textclassifier",
+    "nlu":[{
+      "intent":"saluti",
+      "examples":["ciao","buongiorno", "buona giornata", "salve", "buondì", "buon giorno", "ben trovato"]
+      },
+      {
+      "intent":"chisei",
+      "examples":["Chi sei",
+      "cosa sei",
+      "dimmi di te",
+      "parlami di te",
+      "spiega chi sei",
+      "vorrei capire cosa sei", 
+       "vorrei sapere di te",
+       "posso saper qualcosa su chi sei"]
+      },
+      {
+      "intent":"dovesei",
+      "examples":["dove sei",
+      "dove ti trovi", 
+      "in quale luogo ti trovi",
+      "dimmi dove ti trovi",
+      "dimmi dove sei",
+      "il tuo luogo",
+      "vorrei sapere dove sei",
+      "fammi sapere dove ti trovi", "indicami dove sei", "dammi la tua posizione"]
+      },
+      {
+      "intent":"ristorante",
+      "examples":["dove posso andare a mangiare",
+      "ho fame", 
+      "dimmi qualche ristorante",
+      "consigliami un ristorante",
+      "consigliami dove mangiare",
+      "voglio mangiare",
+      "desidero cenare","desidero pranzare", "dove posso fare colazione", 
+       "mi piacerebbe mangiare qualcosa", "indicami un buon posto dove pranzare", "indicami un buon posto dove cenare"]
+      },
+       {
+      "intent":"taxi",
+      "examples":["come posso chiamare un taxi?",
+      "ho bisogno di un taxi", 
+      "mi serve un taxi",
+      "taxi", "devo andare in aereoporto", "ho bisogno di una macchina", "voglio un taxi",
+                 "chiamami un taxi", "devo chiamare un trasporto con conducente"]
+      }
+           
+               
+    ]
+  }

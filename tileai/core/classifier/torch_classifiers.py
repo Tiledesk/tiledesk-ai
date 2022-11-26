@@ -96,19 +96,22 @@ class TextClassificationModel(nn.Module):
 
 class LSTMClassificationModel(nn.Module):
 
-    def __init__(self, vocab, target_classes):
+    def __init__(self, vocab_size, n_target_classes):
         super(LSTMClassificationModel, self).__init__()
-        #self.hidden_dim = 32
+        self.hidden_dim = 32
         #self.dropout = nn.Dropout(0.3)
-        self.embedding = nn.Embedding(len(vocab), embedding_dim=64, padding_idx=0)
+        self.embedding = nn.Embedding(vocab_size, embedding_dim=64, padding_idx=0)
         
         self.lstm = nn.LSTM(input_size = 64, 
                            hidden_size = 32, 
                            num_layers  = 1, 
-                           dropout     = 0.3,
-                           batch_first=True)
-                
-        self.fc = nn.Linear(32, len(target_classes))
+                           #dropout     = 0.3,
+                           batch_first=True,
+                           bidirectional=True)
+                           
+        self.drop = nn.Dropout(p=0.5)
+
+        self.fc = nn.Linear(2*self.hidden_dim, n_target_classes)
 
         self.init_weights()
 
@@ -118,16 +121,31 @@ class LSTMClassificationModel(nn.Module):
         self.fc.weight.data.uniform_(-initrange, initrange)
         self.fc.bias.data.zero_()
 
-    def forward(self, text): 
-        
-        embedded = self.embedding(text)
+    def forward(self, text, text_len): 
+        import torch
+        from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+        text_emb = self.embedding(text)
+        packed_input = pack_padded_sequence(text_emb, text_len, batch_first=True, enforce_sorted=False)
+        packed_output, (hidden,_) = self.lstm(packed_input)
+        output, _ = pad_packed_sequence(packed_output, batch_first=True)
+
+        out_forward = output[range(len(output)), text_len - 1, :self.hidden_dim]
+        out_reverse = output[:, 0, self.hidden_dim:]
+        out_reduced = torch.cat((out_forward, out_reverse), 1)
+        text_fea = self.drop(out_reduced)
+
+        text_fea = self.fc(text_fea)
+        #text_fea = torch.squeeze(text_fea, 1)
+        #text_out = torch.sigmoid(text_fea)
+
+        return text_fea #text_out
        
-        _, (hidden, _) = self.lstm(embedded)
+        #_, (hidden, _) = self.lstm(embedded)
         #lstm_out, _ = self.lstm(embedded.view(len(text), 1, -1))
         #tag_space = self.fc(lstm_out.view(len(text), -1))
         #tag_scores = F.log_softmax(tag_space, dim=1)
         #return tag_scores
         
-        return self.fc(hidden[-1])
+        #return self.fc(hidden[-1])
 
 

@@ -18,7 +18,7 @@ from tqdm import tqdm
 from sklearn.metrics import accuracy_score
 import gc
 from torch.optim import Adam, SGD
-from tileai.core.classifier.torch_classifiers import TextClassificationModel, LSTMClassificationModel
+from tileai.core.classifier.torch_classifiers import TextClassificationModel
 from torch.nn import functional as F
 import time
 
@@ -27,10 +27,12 @@ import logging
 
 from tileai.core.abstract_tiletrainer import TileTrainer
 from tileai.shared import const
+from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
 
 
 logger = logging.getLogger(__name__)
 
+#TextClassificationModel
 class TileTrainertorchBag(TileTrainer):
     
     def __init__(self, language, pipeline, parameters, model):
@@ -61,7 +63,7 @@ class TileTrainertorchBag(TileTrainer):
         
         val_texts =zip(val_labels, val_texts)
        
-        tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
+        tokenizer = StandarTokenizer() #get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
         vocabulary = self.build_vocab(dataset)
 
         vocab = build_vocab_from_iterator(vocabulary, specials=["<unk>"])
@@ -71,7 +73,7 @@ class TileTrainertorchBag(TileTrainer):
         train_dataset, test_dataset = to_map_style_dataset(train_texts), to_map_style_dataset(val_texts)
         target_classes = set(train_labels)
         
-        text_pipeline = lambda x: vocab(tokenizer(x))
+        text_pipeline = lambda x: vocab(tokenizer.tokenize(x))
         label_pipeline = lambda x: train_labels[x] 
       
         def collate_batch(batch):
@@ -263,9 +265,9 @@ class TileTrainertorchBag(TileTrainer):
     
 
     def build_vocab(self,datasets):
-        tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
+        tokenizer = StandarTokenizer()#get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
         for dataset in datasets:
-            yield tokenizer(dataset)
+            yield tokenizer.tokenize(dataset)
     
     def predict(self, text, text_pipeline, **kwargs):
         model=kwargs['model']
@@ -329,12 +331,11 @@ class TileTrainertorchBag(TileTrainer):
         vocab_for_query.set_default_index(vocab_for_query["<unk>"])
         vocabll = Vocab(vocab_for_query)
 
-        #print(vocabll.get_itos())
-        tokenizer = get_tokenizer("basic_english") 
+        tokenizer = StandarTokenizer() #get_tokenizer("basic_english") 
 
           
         #text_pipeline = lambda x: [vocabll[token] for token in tokenizer(x)]
-        text_pipeline = lambda x: vocabll(tokenizer(x))
+        text_pipeline = lambda x: vocabll(tokenizer.tokenize(x))
 
         with torch.no_grad():
             #vect = [text_pipeline(query_text)]
