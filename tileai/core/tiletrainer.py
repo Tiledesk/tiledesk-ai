@@ -7,7 +7,7 @@ from tileai.core.tiletrainer_average import TileTrainertorchAverage
 from tileai.core.tiletrainer_bag import TileTrainertorchBag
 from tileai.core.tiletrainer_bert import TileTrainertorchBert
 from tileai.core.tiletrainer_lstm import TileTrainertorchLSTM
-from tileai.core.tiletrainer_gpt2 import TileTrainertorchGPT2
+sfrom tileai.core.tiletrainer_gpt2 import TileTrainertorchGPT2
 
 
 class TileTrainerFactory:
