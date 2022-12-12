@@ -59,7 +59,7 @@ Use the ./domain/**nlu.json** file to setup all intents train in your project.
 ```json
 {
   "configuration": {
-    "pipeline": "auto"
+    "pipeline": ["auto"]
   },
   "nlu": [
     {	
@@ -78,7 +78,7 @@ Actually *configuration* parameter only takes this settings:
 
 ```
 "configuration": {
-  "algo": "auto|embeddingwbag|feedforward"
+  "pipeline": "auto|embeddingwbag|feedforward|lstm|bert"
 }
 ```
 

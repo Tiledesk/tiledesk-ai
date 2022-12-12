@@ -14,6 +14,7 @@ from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_sc
 import os
 import logging
 from tileai.core.abstract_tiletrainer import TileTrainer
+from tileai.core.preprocessing.textprocessing import prepare_dataset_bert, save_model, load_model
 from tileai.shared import const
 
 logger = logging.getLogger(__name__)
@@ -32,30 +33,31 @@ class TileTrainertorchBert(TileTrainer):
 
 
     def train(self, train_texts,train_labels):
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         os.environ["WANDB_DISABLED"] = "true"
         
-        label_encoder = LabelEncoder()
-        label_integer_encoded = label_encoder.fit_transform(train_labels)
-        print("integer encoded ",label_integer_encoded)          
+        #label_encoder = LabelEncoder()
+        #label_integer_encoded = label_encoder.fit_transform(train_labels)
+        #print("integer encoded ",label_integer_encoded)          
         
 
         
         
         #train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_one_hot_encoded, test_size=.1)
-        train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.1)
-        print("=============================================================")
-        print(train_texts,train_labels)
-        print("============================================================")
-        
+        #train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.1)
+        #print("=============================================================")
+        #print(train_texts,train_labels)
+        #print("============================================================")
+        train_texts, val_texts, train_labels, val_labels, label_encoder = prepare_dataset_bert(train_texts,train_labels)
+
         from transformers import AutoTokenizer
         tokenizer = AutoTokenizer.from_pretrained(self.pipeline[1], cache_dir="./models/trasformer_cache")
         
 
+
         
         train_encodings = tokenizer(train_texts, truncation=True, padding=True)
         val_encodings = tokenizer(val_texts, truncation=True, padding=True)
-
-        
 
         
         train_dataset = TileDataset(train_encodings, train_labels)
@@ -63,7 +65,7 @@ class TileTrainertorchBert(TileTrainer):
         
        
         # define hyperparams
-        num_labels = len(set(label_integer_encoded))
+        num_labels = len(set(train_labels))
         #learninge_rate = 5e-6
         #epochs = 3
         #batch_size = 16
@@ -105,6 +107,8 @@ class TileTrainertorchBert(TileTrainer):
         
         model = AutoModelForSequenceClassification.from_pretrained(self.pipeline[1], num_labels=num_labels)
 
+        model.to(device)
+        
         from transformers import Trainer
 
         trainer = Trainer(

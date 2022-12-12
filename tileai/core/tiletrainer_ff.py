@@ -14,8 +14,7 @@ from torch.utils.data import DataLoader
 from torch.optim import Adam
 from torch.nn import functional as F
 
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, OneHotEncoder
+
 from sklearn.metrics import accuracy_score, recall_score, precision_score, f1_score, precision_recall_fscore_support
 
 import torchtext
@@ -27,6 +26,7 @@ from tileai.core.classifier.torch_classifiers import EmbeddingClassifier
 from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
 
 from tileai.core.abstract_tiletrainer import TileTrainer
+from tileai.core.preprocessing.textprocessing import prepare_dataset, save_model, load_model
 from tileai.shared import const
 
 logger = logging.getLogger(__name__)
@@ -48,25 +48,11 @@ class TileTrainertorchFF(TileTrainer):
     def train(self, train_texts,train_labels):
        
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
         dataset = train_texts
-
-        label_encoder = LabelEncoder()
-        label_integer_encoded = label_encoder.fit_transform(train_labels)
         
-        logger.info("integer encoded ",label_integer_encoded)                  
+        train_texts, val_texts, train_labels, val_labels, label_encoder = prepare_dataset(train_texts,train_labels)
 
-        #train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_one_hot_encoded, test_size=.1)
-        train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.2)
-        print("=============================================================")
-        print(train_texts,train_labels)
-        print("============================================================")
-
-       
-        train_texts = zip(train_labels,train_texts )
-        
-        
-        val_texts =zip(val_labels, val_texts)
-    
 
         #tokenizer = get_tokenizer("basic_english") ## We'll use tokenizer available from PyTorch
         tokenizer = StandarTokenizer()
@@ -78,6 +64,7 @@ class TileTrainertorchFF(TileTrainer):
         
         
         train_dataset, test_dataset = to_map_style_dataset(train_texts), to_map_style_dataset(val_texts)
+        
         target_classes = set(train_labels)
         
         def vectorize_batch(batch):
@@ -116,41 +103,9 @@ class TileTrainertorchFF(TileTrainer):
         print(classification_report(Y_actual, Y_preds,  labels=np.unique(Y_preds)))
        
         
-        id2label = {}
-        label2id = {}
-        for cla in label_encoder.classes_:
-            id2label[str(label_encoder.transform([cla])[0])]=cla
-            label2id[cla]=int(label_encoder.transform([cla])[0])
-        
+        #(label_encoder, language, pipeline, embed_classifier, vocab, model):
+        save_model(label_encoder,self.language, self.pipeline, embed_classifier, vocab, self.model)
 
-
-        configuration = {}
-        configuration["language"] = self.language
-        configuration["pipeline"] = self.pipeline
-        configuration["class"]=type(embed_classifier).__name__
-        configuration["module"]=type(embed_classifier).__module__
-        configuration["id2label"]=id2label
-        configuration["label2id"] = label2id
-        configuration["vocab_size"]=len(vocab)
-        
-        torch.save (embed_classifier.state_dict(), self.model+"/"+const.MODEL_BIN)
-
-        config_json = self.model+"/"+const.MODEL_CONFIG
-        vocab_file = self.model+"/"+const.MODEL_VOC
-        print(config_json)
-    
-        with open(config_json, 'w', encoding='utf-8') as f:
-            json.dump(configuration, f, ensure_ascii=False, indent=4)
-    
-        f.close()
-        print(vocab)
-        with open(vocab_file, 'w', encoding='utf-8') as f_v:
-            for vb in vocab.get_itos():
-                f_v.write(vb)
-                f_v.write("\n")
-           
-        f_v.close()
-        
         return creport
     
 
@@ -223,35 +178,7 @@ class TileTrainertorchFF(TileTrainer):
 
     def query(self, configuration, query_text):
         
-        vocabulary = []
-        vocab_file = self.model+"/"+const.MODEL_VOC
-        vocabulary = open (vocab_file, "r",  encoding='utf-8').read().splitlines()
-    
-        model_file =   self.model+"/"+const.MODEL_BIN
-
-        for i in configuration:
-            language = configuration["language"]
-            embed_class = configuration["class"]
-            embed_module = configuration["module"]
-            id2label = configuration["id2label"]
-            label2id = configuration["label2id"]
-            vocab_size = configuration["vocab_size"]
-
-        
-        module = importlib.import_module(embed_module)
-        class_ = getattr(module, embed_class)
-        
-        model_classifier = class_(vocab_size, len(id2label.keys()))
-        model_classifier.load_state_dict(torch.load(model_file))
-        model_classifier.eval()
-      
-        odict = OrderedDict([(v,1) for v in vocabulary])
-        
-        vocab_for_query = vocab(odict, specials=["<unk>"])
-        vocab_for_query.set_default_index(vocab_for_query["<unk>"])
-        vocabll = Vocab(vocab_for_query)
-
-        #print(vocabll.get_itos())
+        vocabll,model_classifier, id2label  = load_model(configuration, self.model)
         tokenizer = StandarTokenizer()#get_tokenizer("basic_english") 
 
           

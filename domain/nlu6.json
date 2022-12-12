@@ -1,0 +1,110 @@
+{
+    "configuration": {
+      "language": "en",
+      "pipeline": [""]
+    },
+    "model": "63930ef2d56b4830dbaf429f",
+    "nlu": [
+      {
+        "intent": "close",
+        "examples": [
+          "Close",
+          "Resolved"
+        ]
+      },
+      {
+        "intent": "start",
+        "examples": [
+          "\\start",
+          "start",
+          "inizio",
+          "part"
+        ]
+      },
+      {
+        "intent": "agent_handoff",
+        "examples": [
+          "👨🏻‍🦰 I want an agent",
+          "please, I want to speak to an agent",
+          "can I speak with an agent?",
+          "I want to talk to an agent",
+          "I want an human operator"
+          
+        ]
+      },
+      {
+        "intent": "7jLAZf",
+        "examples": [
+          "What can you do?",
+          "Who are you?"
+        ]
+      },
+      {
+        "intent": "defaultFallback",
+        "examples": [
+          "defaultFallback",
+          "falback"
+        ]
+      },
+      {
+        "intent": "back",
+        "examples": [
+          "Back to start",
+          "ricomincia"
+        ]
+      },
+      {
+        "intent": "action1",
+        "examples": [
+          "Sample Action",
+          "azione di esempio",
+          "prova"
+        ]
+      },
+      {
+        "intent": "fave pizza",
+        "examples": [
+          "🍕The most ordered type of pizza",
+          "give me a pizza",
+          "I would to order some food"
+        ]
+      },
+      {
+        "intent": "frame game",
+        "examples": [
+          "🕹️Or play a game while waiting for your food",
+          "you can wait or not",
+          "try another kind of pizza"
+        ]
+      },
+      {
+        "intent": "chef",
+        "examples": [
+          "👌Chef's favourite",
+          "my favorite chef is cannavacciulo"
+        ]
+      },
+      {
+        "intent": "location",
+        "examples": [
+          "🍣The most highly rated sushi place location",
+          "I love sushi",
+          "the sushi place is a beautiful place"
+        ]
+      },
+      {
+        "intent": "booze",
+        "examples": [
+          "🍹Cocktail of the month",
+          "I like tequila",
+          "Ilike RON"
+        ]
+      },
+      {
+        "intent": "oktoberfest",
+        "examples": [
+          "🍻Oktoberfest specials"
+        ]
+      }
+    ]
+  }
