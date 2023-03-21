@@ -7,7 +7,7 @@ from collections import OrderedDict
 import time
 import importlib
 import logging
-
+    
 import torch
 from torch import nn
 from torch.utils.data import DataLoader
@@ -137,7 +137,8 @@ class TileTrainertorchLSTM(TileTrainer):
     def calcValLossAndAccuracy(self,model, loss_fn, val_loader):
         with torch.no_grad():
             Y_shuffled, Y_preds, losses = [],[],[]
-            for X, Y, lenx in val_loader:
+            for X, Y, LenX in val_loader:
+                lenx = LenX.clone().detach().to("cpu")
                 preds = model(X,lenx)
                 loss = loss_fn(preds, Y)
                 losses.append(loss.item())
@@ -149,7 +150,7 @@ class TileTrainertorchLSTM(TileTrainer):
             Y_preds = torch.cat(Y_preds)
 
             print("Valid Loss : {:.3f}".format(torch.tensor(losses).mean()))
-            print("Valid Acc  : {:.3f}".format(accuracy_score(Y_shuffled.detach().numpy(), Y_preds.detach().numpy())))
+            print("Valid Acc  : {:.3f}".format(accuracy_score(Y_shuffled.detach().to("cpu").numpy(), Y_preds.detach().to("cpu").numpy())))
 
 
     def trainModel(self, model, loss_fn, optimizer, train_loader, val_loader, epochs=10):
@@ -157,8 +158,8 @@ class TileTrainertorchLSTM(TileTrainer):
                 
             losses = []
             for X, Y, LenX in tqdm(train_loader):
-                
-                Y_preds = model(X,LenX)
+                lenx = LenX.clone().detach().to("cpu")
+                Y_preds = model(X,lenx)
 
                 loss = loss_fn(Y_preds, Y)
                 losses.append(loss.item())
@@ -173,13 +174,14 @@ class TileTrainertorchLSTM(TileTrainer):
     def makePredictions(self, model, loader):
         Y_shuffled, Y_preds = [], []
         for X, Y, lenx in loader:
+            lenx = lenx.clone().detach().to("cpu") 
             preds = model(X,lenx)
             Y_preds.append(preds)
             Y_shuffled.append(Y)
         gc.collect()
         Y_preds, Y_shuffled = torch.cat(Y_preds), torch.cat(Y_shuffled)
 
-        return Y_shuffled.detach().numpy(), F.softmax(Y_preds, dim=-1).argmax(dim=-1).detach().numpy()
+        return Y_shuffled.detach().to("cpu").numpy(), F.softmax(Y_preds, dim=-1).argmax(dim=-1).detach().to("cpu").numpy()
 
 
     def query(self, configuration, query_text):

@@ -25,7 +25,7 @@ def prepare_dataset(train_texts,train_labels):
 
         #train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_one_hot_encoded, test_size=.1)
     try:
-        train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.2, stratify=label_integer_encoded)
+        train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.2)#, stratify=label_integer_encoded)
     except ValueError as ve:
         logger.info(ve)
         print(ve)
@@ -58,7 +58,7 @@ def prepare_dataset_bert(train_texts,train_labels):
 
         #train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_one_hot_encoded, test_size=.1)
     try:
-        train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.2, stratify=label_integer_encoded)
+        train_texts, val_texts, train_labels, val_labels = train_test_split(train_texts, label_integer_encoded, test_size=.2)#, stratify=label_integer_encoded)
     except ValueError as ve:
         logger.info(ve)
         print(ve)
@@ -112,6 +112,8 @@ def save_model(label_encoder, language, pipeline, embed_classifier, vocab, model
     f_v.close()  
 
 def load_model(configuration, model):
+    
+    
     vocabulary = []
     vocab_file = model+"/"+const.MODEL_VOC
     vocabulary = open (vocab_file, "r",  encoding='utf-8').read().splitlines()
@@ -133,7 +135,7 @@ def load_model(configuration, model):
     model_classifier = class_(vocab_size, len(id2label.keys()))
     model_classifier.load_state_dict(torch.load(model_file))
     model_classifier.eval()
-      
+ 
     odict = OrderedDict([(v,1) for v in vocabulary])
         
     vocab_for_query = vocab(odict, specials=["<unk>"])

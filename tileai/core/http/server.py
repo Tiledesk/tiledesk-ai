@@ -247,9 +247,13 @@ def create_app(
         text = request.json.get("text")
 
         try:
-            from tileai.core.model_training import query
-            
-            label, risult_dict = query(model, text) 
+            from tileai.core.model_training import query, http_query
+            async with app.ctx.redis as r:
+                redis_model = await r.get(model)
+            if(app.ctx.redis is None):
+                label, risult_dict = query(model, text)
+            else:
+                label, risult_dict = await http_query(redis_conn=app.ctx.redis, model=model, query_text=text)
 
            
 
@@ -263,14 +267,10 @@ def create_app(
                 f"An unexpected error occurred. Error: {e}",
             )
 
-    #async def notify_server_started_after_five_seconds():
-    #    await asyncio.sleep(5)
-        
-    #    print('Server successfully started!')
-    
-    #app.add_task(notify_server_started_after_five_seconds())
-
+   
     return app
+
+
 def add_root_route(app: Sanic) -> None:
     """Add '/' route to return hello."""
 
@@ -279,4 +279,13 @@ def add_root_route(app: Sanic) -> None:
         """Check if the server is running and responds with the version."""
         from tileai.cli import __version__
         return response.text("Hello from Tileai: " + __version__)
+    
+    @app.get("/test1")
+    async def testredis(request: Request) -> HTTPResponse:
+        """Check if the server is running and responds with the version."""
+        async with app.ctx.redis as r:
+            await r.set("key1", "value1")
+            result = await r.get("key1")
+        from sanic.response import text
+        return text(str(result))
 

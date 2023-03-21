@@ -11,3 +11,5 @@ torch
 torchtext
 scikit-plot
 jsonschema
+redis
+aioredis

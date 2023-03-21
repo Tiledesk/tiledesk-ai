@@ -5,6 +5,8 @@ import uuid
 import numpy as np
 import os
 
+import asyncio
+
 
 
 import tileai.shared.const as const
@@ -84,6 +86,7 @@ def query(model, query_text):
     
     ### TO FIX 
     # Anche per la query è necessario verificare il tipo  di modello e creare l'istanza giusta per la preparazione del dato
+
     json_filename = model+"/"+const.MODEL_CONFIG
     jsonfile_config = open (json_filename, "r", encoding='utf-8')
     config = json.loads(jsonfile_config.read())
@@ -98,12 +101,75 @@ def query(model, query_text):
     tiletrainerfactory = TileTrainerFactory()
     tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",model )
 
-    #tiletrainertorch = TileTrainertorchFF("it","", "dd",None)
 
     label, result_dict = tiletrainertorch.query(config,  query_text)
     return label,result_dict
     
+async def http_query(redis_conn, model, query_text):
+    import dill
+   
+    async with redis_conn as r:
+        
+        dill_redis_model = await r.get(model)
+        redmc = await r.get(model+"/1")
     
+    if dill_redis_model is None:
+        print("scrivo su redis")
+        json_filename = model+"/"+const.MODEL_CONFIG
+        jsonfile_config = open (json_filename, "r", encoding='utf-8')
+        config = json.loads(jsonfile_config.read())
+        jsonfile_config.close()
+    
+        pipeline= config["pipeline"]
+        tiletrainerfactory = TileTrainerFactory()
+        tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",model )
+        from tileai.core.preprocessing.textprocessing import load_model
+        from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
+        from tileai.core.http.redis_model import RedisModel
+        vocabll,model_classifier, id2label  = load_model(config, model)
+        #dill_class_model = dill.dumps(model_classifier)
+        tokenizer = StandarTokenizer()#get_tokenizer("basic_english") 
+        #vocabulary, model, configuration, tokenizer, id2label
+        redis_model = RedisModel(vocabulary=vocabll,
+                                 id2label=id2label,
+                                 configuration=config, 
+                                 tokenizer=tokenizer, 
+                                 model=model_classifier,
+                                 tiletrainertorch= tiletrainertorch
+                                 )
+
+        redmc = dill.dumps(model_classifier)
+        dill_redis_model = dill.dumps(redis_model)
+       
+        async with redis_conn as r:
+            await r.set(model, dill_redis_model)
+            await r.set(model+"/1", redmc)
+        
+        
+    else:
+        redis_model= dill.loads(dill_redis_model) 
+         
+        conf = redis_model.configuration
+        pipeline= conf["pipeline"]
+        tiletrainertorch = redis_model.tiletrainertorch
+        #model_classifier=dill.loads(redis_model.model)
+        mod = dill.loads(redmc)
+        print("===========")
+        print(type(mod))
+        
+        #model_classifier.eval()
+        #tiletrainerfactory = TileTrainerFactory()
+        #tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",model )
+
+            
+    
+    
+    label, result_dict = tiletrainertorch.query_http(vocabll=redis_model.vocabulary,
+                                                     model_classifier=mod,
+                                                     id2label=redis_model.id2label,
+                                                     tokenizer=redis_model.tokenizer, 
+                                                     query_text=query_text)
+    return label,result_dict    
     
     
     

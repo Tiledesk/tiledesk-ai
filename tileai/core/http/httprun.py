@@ -14,6 +14,8 @@ from tileai.core.http import server
 from sanic import Sanic
 from asyncio import AbstractEventLoop
 
+from aioredis import from_url
+
 logger = logging.getLogger()  # get the root logger
 
 
@@ -57,6 +59,7 @@ def serve_application(
     model_path: Optional[Text] = None,
     endpoints: Optional[Text] = None,
     port: int = tileai.shared.const.DEFAULT_SERVER_PORT,
+    redis_url : Optional[Text] = None,
     cors: Optional[Union[Text, List[Text]]] = None,
     auth_token: Optional[Text] = None,
     response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
@@ -79,23 +82,40 @@ def serve_application(
     #    partial(load_agent_on_start, model_path, endpoints, remote_storage),
     #    "before_server_start",
     #)
+    
+
+    @app.listener("before_server_start")
+    async def setup_redis(_app: Sanic, _loop):
+        if not redis_url:
+            raise ValueError("You must specify a redis_url or set the {} Sanic config variable".format(config_name))
+        logger.info("[sanic-redis] connecting")
+        _redis = await from_url(redis_url)
+        setattr(_app.ctx, "redis", _redis)
+        conn = _redis
+
+    @app.listener('after_server_stop')
+    async def close_redis(_app, _loop):
+        logger.info("[sanic-redis] closing")
+        await app.ctx.redis.close()
+        
 
     protocol = "http"
     interface = tileai.shared.const.DEFAULT_SERVER_INTERFACE
 
     print(f"Starting Tileai server on {protocol}://{interface}:{port}")
 
-    # import multiprocessing
-    # workers = multiprocessing.cpu_count()
+    import multiprocessing
+    workers = multiprocessing.cpu_count()
     app.run(
         host=interface,
         port=port,
         debug=True,
         #dev=True,
         auto_reload=False,
-        workers=4,
+        workers=workers,
         single_process=False
        
     )
+
 
 

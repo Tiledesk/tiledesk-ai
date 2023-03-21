@@ -27,6 +27,7 @@ def add_subparser(
         help="Starts a Tileai server.",
     )
     add_port_param(run_parser)
+    add_redis_param(run_parser,help_text="Redis URL")
     run_parser.set_defaults(func=run_server)
 
    
@@ -41,6 +42,21 @@ def add_port_param(
         type=int,
         help="Port for http server.",
     )
+
+def add_redis_param(
+    parser: Union[argparse.ArgumentParser, argparse._ActionsContainer],
+    help_text: Text,
+    default: Optional[Text] = "",
+    required: bool = False) -> None:
+    """Specifies redis_url param."""
+    parser.add_argument(
+        "-r","--redis_url",
+        type=str, 
+        default=default,
+        help=help_text,
+        required=required and default is None,
+    )
+
 
 def run_server(args: argparse.Namespace) -> None:
     from tileai import run

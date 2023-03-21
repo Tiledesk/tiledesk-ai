@@ -267,11 +267,7 @@ class TileTrainertorchBag(TileTrainer):
         text_pipeline = lambda x: vocabll(tokenizer.tokenize(x))
 
         with torch.no_grad():
-            #vect = [text_pipeline(query_text)]
-            #text = torch.tensor([sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in vect])
-            #text = torch.tensor(vect)
-            #prova = text_pipeline(query_text)
-            #print(prova)
+            
             text = torch.tensor(text_pipeline(query_text))
             
 
