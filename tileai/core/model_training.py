@@ -105,16 +105,18 @@ def query(model, query_text):
     label, result_dict = tiletrainertorch.query(config,  query_text)
     return label,result_dict
     
+    
 async def http_query(redis_conn, model, query_text):
     import dill
    
     async with redis_conn as r:
         
         dill_redis_model = await r.get(model)
-        redmc = await r.get(model+"/1")
+        redmc = await r.get(model+"/bin")
     
     if dill_redis_model is None:
-        print("scrivo su redis")
+        #scrivo su redis
+        print("load from file system")
         json_filename = model+"/"+const.MODEL_CONFIG
         jsonfile_config = open (json_filename, "r", encoding='utf-8')
         config = json.loads(jsonfile_config.read())
@@ -123,30 +125,54 @@ async def http_query(redis_conn, model, query_text):
         pipeline= config["pipeline"]
         tiletrainerfactory = TileTrainerFactory()
         tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",model )
-        from tileai.core.preprocessing.textprocessing import load_model
-        from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
-        from tileai.core.http.redis_model import RedisModel
-        vocabll,model_classifier, id2label  = load_model(config, model)
-        #dill_class_model = dill.dumps(model_classifier)
-        tokenizer = StandarTokenizer()#get_tokenizer("basic_english") 
-        #vocabulary, model, configuration, tokenizer, id2label
-        redis_model = RedisModel(vocabulary=vocabll,
-                                 id2label=id2label,
-                                 configuration=config, 
-                                 tokenizer=tokenizer, 
-                                 model=model_classifier,
-                                 tiletrainertorch= tiletrainertorch
-                                 )
+        if pipeline[0]=="bertclassifier":
+            print("bert load from file system")
+            from tileai.core.preprocessing.textprocessing import load_model_bert
+            from tileai.core.http.redis_model import RedisModel
+            model_classifier, id2label, tokenizer  = load_model_bert(config, model)
+            redis_model = RedisModel(vocabulary=None,
+                                     id2label=id2label,
+                                     configuration=config, 
+                                     tokenizer=tokenizer, 
+                                     #model=model_classifier,
+                                     tiletrainertorch= tiletrainertorch
+                                     )
+            
+            redmc = dill.dumps(model_classifier)
+            dill_redis_model = dill.dumps(redis_model)
 
-        redmc = dill.dumps(model_classifier)
-        dill_redis_model = dill.dumps(redis_model)
+            async with redis_conn as r:
+                await r.set(model, dill_redis_model)
+                await r.set(model+"/bin", redmc) 
+
+
+
+        else:    
+            from tileai.core.preprocessing.textprocessing import load_model
+            from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
+            from tileai.core.http.redis_model import RedisModel
+            vocabll,model_classifier, id2label  = load_model(config, model)
+            #dill_class_model = dill.dumps(model_classifier)
+            tokenizer = StandarTokenizer()#get_tokenizer("basic_english") 
+            #vocabulary, model, configuration, tokenizer, id2label
+            redis_model = RedisModel(vocabulary=vocabll,
+                                     id2label=id2label,
+                                     configuration=config, 
+                                     tokenizer=tokenizer, 
+                                     #model=model_classifier,
+                                     tiletrainertorch= tiletrainertorch
+                                     )
+
+            redmc = dill.dumps(model_classifier)
+            dill_redis_model = dill.dumps(redis_model)
        
-        async with redis_conn as r:
-            await r.set(model, dill_redis_model)
-            await r.set(model+"/1", redmc)
-        
+            async with redis_conn as r:
+                await r.set(model, dill_redis_model)
+                await r.set(model+"/bin", redmc) 
+        mod=model_classifier
         
     else:
+        #leggo da redis
         redis_model= dill.loads(dill_redis_model) 
          
         conf = redis_model.configuration
@@ -154,8 +180,7 @@ async def http_query(redis_conn, model, query_text):
         tiletrainertorch = redis_model.tiletrainertorch
         #model_classifier=dill.loads(redis_model.model)
         mod = dill.loads(redmc)
-        print("===========")
-        print(type(mod))
+        print("From redis")
         
         #model_classifier.eval()
         #tiletrainerfactory = TileTrainerFactory()
@@ -173,3 +198,9 @@ async def http_query(redis_conn, model, query_text):
     
     
     
+async def del_old_model(redis_conn, model):
+    
+    async with redis_conn as r:
+        print("key to delete: "+model)
+        await r.delete(model+"/bin")
+        await r.delete(model)

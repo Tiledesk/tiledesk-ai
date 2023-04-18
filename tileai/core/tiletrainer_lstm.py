@@ -233,5 +233,53 @@ class TileTrainertorchLSTM(TileTrainer):
        
         return id2label[str(predicted_class)],  results_dict
 
+    
+    
+    def query_http(self, vocabll,model_classifier, id2label,tokenizer, query_text):
+        
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        
+
+          
+        text_pipeline = lambda x: [vocabll[token] for token in tokenizer.tokenize(x)]
+        
+        with torch.no_grad():
+            vect = [text_pipeline(query_text)]
+            ### padding o tronco se il testo è troppo lungo
+            text = torch.tensor([sample+([0]* (20-len(sample))) if len(sample)<20 else sample[:20] for sample in vect]).to(device)
+            lenx = torch.tensor([len(vect)], dtype=torch.int64).to(device)  
+            
+            logits_output = model_classifier(text,lenx)
+            
+            
+            
+            pred_prob = torch.softmax(logits_output,dim=1)
+           
+            
+            
+            predicted_class = torch.argmax(pred_prob[0]).item()
+            predicted_prob = pred_prob[0][predicted_class].item() 
+            print(predicted_class, predicted_prob)
+            
+            #ciclo sulle classi ed ottengo le prob per ogni classee
+            
+            intent_r = []
+            for idx,classes_to_pred in enumerate(pred_prob[0]):
+                intent_r.append({"name":id2label[str(idx)],
+                                     "confidence": classes_to_pred.item() }) 
+                #print(classes_to_pred.item())
+
+            #predicted_class = output.argmax(1).item() 
+            results_dict = {}
+            results_dict["text"]= query_text
+            results_dict["intent"]={"name":id2label[str(predicted_class)], 
+                                     "confidence": predicted_prob }
+            
+            results_dict["intent_ranking"] = sorted(intent_r, key=lambda d: d['confidence'], reverse=True) 
+            
+
+       
+        return id2label[str(predicted_class)],  results_dict
+
 
 

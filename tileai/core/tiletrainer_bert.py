@@ -310,6 +310,60 @@ class TileTrainertorchBert(TileTrainer):
            'precision': precision,
            'recall': recall
             }
+    
+    
+    def query_http(self, vocabll=None, model_classifier=None, id2label=None, tokenizer=None, query_text=None):
+       
+        #trainer = Trainer(model=model_classifier)
+         
+        
+        input_ids = tokenizer.encode(query_text, add_special_tokens=True)
+        
+        # Create tensor, use .cuda() to transfer the tensor to GPU
+        query_text_tensor = torch.tensor(input_ids).long()
+        # Fake batch dimension
+
+        query_text_tensor = query_text_tensor.unsqueeze(0)
+
+        # Call the model and get the logits
+
+        logits,  = model_classifier(query_text_tensor).logits
+    
+    
+        # Remove the fake batch dimension
+        logits = logits.squeeze(0)
+
+        # The model was trained with a Log Likelyhood + Softmax combined loss, hence to extract probabilities we need a softmax on top of the logits tensor
+        #proba = nn.functional.softmax(logits, dim=0)
+        
+        pred_prob = torch.softmax(logits,dim=0)
+
+       
+
+        predicted_class = torch.argmax(pred_prob).item()
+        predicted_prob = pred_prob[predicted_class].item() 
+        print(predicted_class, predicted_prob)
+
+        
+
+        #ciclo sulle classi ed ottengo le prob per ogni classee
+            
+        intent_r = []
+        for idx,classes_to_pred in enumerate(pred_prob):
+            intent_r.append({"name":id2label[str(idx)],
+                                     "confidence": classes_to_pred.item() }) 
+                #print(classes_to_pred.item())
+
+            #predicted_class = output.argmax(1).item() 
+        results_dict = {}
+        results_dict["text"]= query_text
+        results_dict["intent"]={"name":id2label[str(predicted_class)], 
+                                 "confidence": predicted_prob }
+         
+        results_dict["intent_ranking"] = sorted(intent_r, key=lambda d: d['confidence'], reverse=True) 
+        
+        return id2label[str(predicted_class)],  results_dict
+
 
 class TileDataset(torch.utils.data.Dataset):
     def __init__(self, encodings, labels):

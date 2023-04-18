@@ -1,9 +1,13 @@
 import tileai.shared.const
 import logging
 import os
+import json
 
 import asyncio
 import multiprocessing
+from time import sleep
+from threading import Event
+
 from functools import reduce, wraps
 import concurrent.futures
 
@@ -11,6 +15,7 @@ from tileai.shared.exceptions import ErrorResponse
 
 import tileai.shared.const as const
 
+from queue import Queue
 
 import aiohttp
 import jsonschema
@@ -52,6 +57,79 @@ def configure_cors(
         app, resources={r"/*": {"origins": cors_origins or ""}}, automatic_options=True
     )
 
+
+def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
+    """Decorator to enable async request handling.
+
+    If the incoming HTTP request specified a `callback_url` query parameter, the request
+    will return immediately with a 204 while the actual request response will
+    be sent to the `callback_url`. If an error happens, the error payload will also
+    be sent to the `callback_url`.
+
+    Args:
+        f: The request handler function which should be decorated.
+
+    Returns:
+        The decorated function.
+    """
+
+    @wraps(f)
+    async def decorated_function(
+        request: Request, *args: Any, **kwargs: Any
+    ) -> HTTPResponse:
+        
+        print(kwargs)
+        #callback_url = request.args.get("callback_url")
+        callback_url = request.app.ctx.callback_url
+
+        print("Callback url",callback_url )
+        # Only process request asynchronously if the user specified a `callback_url`
+        # query parameter.
+        if not callback_url:
+            return await f(request, *args, **kwargs)
+
+        async def wrapped() -> None:
+            try:
+                print(request)
+                print(args)
+                print(kwargs)
+                result: HTTPResponse = await f(request, *args, **kwargs)
+                print(result)
+                payload: Dict[Text, Any] = dict(
+                    data=result.body, headers={"Content-Type": result.content_type}
+                )
+                logger.debug(
+                    "Asynchronous processing of request was successful. "
+                    "Sending result to callback URL."
+                )
+
+            except Exception as e:
+                if not isinstance(e, ErrorResponse):
+                    logger.error(e)
+                    e = ErrorResponse(
+                        HTTPStatus.INTERNAL_SERVER_ERROR,
+                        "UnexpectedError",
+                        f"An unexpected error occurred. Error: {e}",
+                    )
+                # If an error happens, we send the error payload to the `callback_url`
+                payload = dict(json=e.error_info)
+                logger.error(
+                    "Error happened when processing request asynchronously. "
+                    "Sending error to callback URL."
+                )
+            async with aiohttp.ClientSession() as session:
+                await session.post(callback_url, raise_for_status=True, **payload)
+
+        # Run the request in the background on the event loop
+        request.app.add_task(wrapped())
+
+        # The incoming request will return immediately with a 204
+        return response.empty()
+
+    return decorated_function
+
+
+
 def run_in_thread(f: Callable[..., Coroutine]) -> Callable:
     """Decorator which runs request on a separate thread.
 
@@ -76,8 +154,11 @@ def run_in_thread(f: Callable[..., Coroutine]) -> Callable:
         def run() -> HTTPResponse:
             return asyncio.run(f(request, *args, **kwargs))
 
+        
+       
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            return await request.app.loop.run_in_executor(pool, run)
+            future = await request.app.loop.run_in_executor(pool, run)
+            return future
 
     return decorated_function
 
@@ -130,11 +211,14 @@ def create_app(
             user_id="username",
         )
     """
+   
+  
     
-    
+
     # Initialize shared object of type unsigned int for tracking
     # the number of active training processes
     app.ctx.active_training_processes = multiprocessing.Value("I", 0)
+    
 
     #@app.exception(ErrorResponse)
     #async def handle_error_response(
@@ -144,8 +228,7 @@ def create_app(
 
 
     
-
-
+    
     @app.get("/version")
     async def version(request: Request) -> HTTPResponse:
         """Respond with the version number of the installed Tileai."""
@@ -176,17 +259,57 @@ def create_app(
             return response.json(
                 {
                     "model_file":"nessun modello ancora presente"
+                    
                 }
             )
     
 
+    @app.post("/model/enqueuetrain")
+    #@requires_auth(app, auth_token)
+    @async_callback_url
+    async def queuetrain(request: Request) -> HTTPResponse:
+
+       
+        validate_request_body(
+            request, "You must provide configuration and training data in the request body in order to train your model.")
+                
+      
+        nlu = request.json
+        
+       
+        modelpath = nlu["model"]
+        print(modelpath)
+        nlu_str = json.dumps(nlu)#.encode('utf-8')
+        from tileai.core.model_training import del_old_model
+                
+        try:
+            async with app.ctx.redis as red:
+                await del_old_model(redis_conn=red, model=const.MODEL_PATH_ROOT+modelpath)
+                res = await red.publish('train',str(nlu_str))
+            return response.json({"message":"Task is in queue","n client":res})
+        
+        except ErrorResponse as e:
+            raise e
+        
+        except Exception as e:
+            raise ErrorResponse(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                "Queue error",
+                f"An unexpected error occurred during training. Error: {e}",
+            )
+        
+
+
+
+
     @app.post("/model/train")
     #@requires_auth(app, auth_token)
-    #@async_if_callback_url
+    @async_callback_url
     @run_in_thread
-    #@inject_temp_dir
     async def train(request: Request) -> HTTPResponse:
-        
+
+        print("CHIAMAO TRAIN")
+        print(request.json)
     
         validate_request_body(
             request, "You must provide configuration and training data in the request body in order to train your model.")
@@ -196,7 +319,7 @@ def create_app(
         modelpath = request.json["model"]
 
         try:
-            with app.ctx.active_training_processes.get_lock():
+            with app.ctx.active_training_processes.get_lock(): 
                 app.ctx.active_training_processes.value += 1
 
             from tileai.core.model_training import train
@@ -207,6 +330,7 @@ def create_app(
 
             if training_result.model:
                 filename = os.path.basename(training_result.model)
+                
                 print(filename)
                 print(training_result.performanceindex)
                 return response.json({"model":training_result.model}) # da valutare se restituire parametri , "performance":training_result.performanceindex
@@ -248,8 +372,6 @@ def create_app(
 
         try:
             from tileai.core.model_training import query, http_query
-            async with app.ctx.redis as r:
-                redis_model = await r.get(model)
             if(app.ctx.redis is None):
                 label, risult_dict = query(model, text)
             else:
@@ -269,6 +391,10 @@ def create_app(
 
    
     return app
+
+
+
+    #@requires_auth(app, auth_token)
 
 
 def add_root_route(app: Sanic) -> None:

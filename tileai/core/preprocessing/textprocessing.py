@@ -143,4 +143,29 @@ def load_model(configuration, model):
     vocabll = Vocab(vocab_for_query)
     
     return vocabll, model_classifier, id2label
+
+def load_model_bert(configuration, model):
+    #model_classifier, id2label, tokenizer
+    from transformers import AutoTokenizer, Trainer, AutoModelForSequenceClassification
+    tokenizer = AutoTokenizer.from_pretrained(configuration["pipeline"][1], cache_dir=const.MODEL_CACHE_TRANSFORMERS)
+    
+    config_file_path = model+"/config.json"
+    config_json = open (config_file_path, "r",  encoding='utf-8').read().splitlines()
+    
+    model_file = model+"/pytorch_model.bin"
+
+    for i in configuration:
+        language = configuration["language"]
+       
+        id2label = configuration["id2label"]
+        label2id = configuration["label2id"]
+       
+        
+    model = AutoModelForSequenceClassification.from_pretrained(model)
+
+   
+    
+    
+    return model, id2label, tokenizer
+    
     
