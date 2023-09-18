@@ -180,7 +180,7 @@ async def http_query(redis_conn, model, query_text):
         tiletrainertorch = redis_model.tiletrainertorch
         #model_classifier=dill.loads(redis_model.model)
         mod = dill.loads(redmc)
-        print("From redis")
+        
         
         #model_classifier.eval()
         #tiletrainerfactory = TileTrainerFactory()
@@ -201,6 +201,5 @@ async def http_query(redis_conn, model, query_text):
 async def del_old_model(redis_conn, model):
     
     async with redis_conn as r:
-        print("key to delete: "+model)
         await r.delete(model+"/bin")
         await r.delete(model)

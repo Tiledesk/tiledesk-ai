@@ -61,10 +61,10 @@ def configure_cors(
 def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
     """Decorator to enable async request handling.
 
-    If the incoming HTTP request specified a `callback_url` query parameter, the request
+    If the incoming HTTP request specified a `webhook_url` json parameter, the request
     will return immediately with a 204 while the actual request response will
-    be sent to the `callback_url`. If an error happens, the error payload will also
-    be sent to the `callback_url`.
+    be sent to the `webhook_url`. If an error happens, the error payload will also
+    be sent to the `webhook_url`.
 
     Args:
         f: The request handler function which should be decorated.
@@ -78,21 +78,18 @@ def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
         request: Request, *args: Any, **kwargs: Any
     ) -> HTTPResponse:
         
-        print(kwargs)
-        #callback_url = request.args.get("callback_url")
-        callback_url = request.app.ctx.callback_url
-
-        print("Callback url",callback_url )
-        # Only process request asynchronously if the user specified a `callback_url`
+       
+        #webhook_url
+        webhook_url = request.json["webhook_url"]
+        #print("Webhook url",webhook_url )
+        # Only process request asynchronously if the user specified a `webhook_url`
         # query parameter.
-        if not callback_url:
+        if not webhook_url:
             return await f(request, *args, **kwargs)
 
         async def wrapped() -> None:
             try:
-                print(request)
-                print(args)
-                print(kwargs)
+                
                 result: HTTPResponse = await f(request, *args, **kwargs)
                 print(result)
                 payload: Dict[Text, Any] = dict(
@@ -100,7 +97,7 @@ def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
                 )
                 logger.debug(
                     "Asynchronous processing of request was successful. "
-                    "Sending result to callback URL."
+                    "Sending result to webhook URL."
                 )
 
             except Exception as e:
@@ -118,7 +115,7 @@ def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
                     "Sending error to callback URL."
                 )
             async with aiohttp.ClientSession() as session:
-                await session.post(callback_url, raise_for_status=True, **payload)
+                await session.post(webhook_url, raise_for_status=True, **payload)
 
         # Run the request in the background on the event loop
         request.app.add_task(wrapped())
@@ -157,7 +154,19 @@ def run_in_thread(f: Callable[..., Coroutine]) -> Callable:
         
        
         with concurrent.futures.ThreadPoolExecutor() as pool:
+            #from os import getpid
+            #from os import getppid
+            #from threading import current_thread
+            #print("==================================================")
+            #print(f'Worker pid={getpid()}, ppid={getppid()} thread={current_thread().name}')
+            #print("==================================================")
             future = await request.app.loop.run_in_executor(pool, run)
+            #future = request.app.loop.run_in_executor(pool, run)
+            #sleep(1)
+            #was_cancelled = future.cancel()
+            #print(f'Second task was cancelled: {was_cancelled}')
+            #await future
+            
             return future
 
     return decorated_function
@@ -308,7 +317,7 @@ def create_app(
     @run_in_thread
     async def train(request: Request) -> HTTPResponse:
 
-        print("CHIAMAO TRAIN")
+        
         print(request.json)
     
         validate_request_body(
@@ -345,7 +354,6 @@ def create_app(
             raise e
         
         except Exception as e:
-            logger.error("ECCEZIONE")
             raise ErrorResponse(
                 HTTPStatus.INTERNAL_SERVER_ERROR,
                 "TrainingError",
