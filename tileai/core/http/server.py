@@ -80,10 +80,13 @@ def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
         
        
         #webhook_url
+        #
+        if not "webhook_url" in request.json.keys():
+            return await f(request, *args, **kwargs)
         webhook_url = request.json["webhook_url"]
         #print("Webhook url",webhook_url )
         # Only process request asynchronously if the user specified a `webhook_url`
-        # query parameter.
+        # json keys.
         if not webhook_url:
             return await f(request, *args, **kwargs)
 
