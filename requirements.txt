@@ -3,6 +3,7 @@ clint
 pandas
 Sanic>=22.3.2
 sanic_cors
+sanic_jwt
 aiohttp>=3.8.1
 sklearn
 transformers>=4.20.1

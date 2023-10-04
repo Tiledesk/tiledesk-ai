@@ -24,7 +24,10 @@ from sanic.request import Request
 from sanic.response import HTTPResponse
 from sanic_cors import CORS
 from sanic import Blueprint
+
 from http import HTTPStatus
+
+from inspect import isawaitable
 
 from typing import (
     Any,
@@ -57,6 +60,79 @@ def configure_cors(
         app, resources={r"/*": {"origins": cors_origins or ""}}, automatic_options=True
     )
 
+def requires_auth(
+    app: Sanic, token: Optional[Text] = None
+) -> Callable[["SanicView"], "SanicView"]:
+    """Wraps a request handler with token authentication."""
+
+    
+    def decorator(f: "SanicView") -> "SanicView":
+        def bot_id_from_args(args: Any, kwargs: Any) -> Optional[Text]:
+            argnames = rasa.shared.utils.common.arguments_of(f)
+
+            try:
+                sender_id_arg_idx = argnames.index("bot_id")
+                if "bot_id" in kwargs:  # try to fetch from kwargs first
+                    return kwargs["bot_id"]
+                if sender_id_arg_idx < len(args):
+                    return args[sender_id_arg_idx]
+                return None
+            except ValueError:
+                return None
+    
+        async def sufficient_scope(
+            request: Request, *args: Any, **kwargs: Any
+        ) -> Optional[bool]:
+            
+            jwt_data =   await request.app.ctx.auth.extract_payload(request)
+            
+            user = jwt_data.get("user", {})
+
+            username = user.get("username", None)
+            role = user.get("role", None)
+
+            if role == "admin":
+                return True
+            elif role == "user":
+                bot_id = bot_id_from_args(args, kwargs)
+                return bot_id is not None and username == bot_id
+            else:
+                return False
+
+        @wraps(f)
+        async def decorated(
+            request: Request, *args: Any, **kwargs: Any
+        ) -> response.HTTPResponse:
+
+            #print("USE_JWT",app.config.get("USE_JWT"))
+            # noinspection PyProtectedMember
+            if app.config.get(
+                "USE_JWT"
+            ) and await request.app.ctx.auth.is_authenticated(request):
+                if await sufficient_scope(request, *args, **kwargs):      
+                    result = f(request, *args, **kwargs)
+                    return await result if isawaitable(result) else result
+                    
+                raise ErrorResponse(
+                    HTTPStatus.FORBIDDEN,
+                    "NotAuthorized",
+                    "User has insufficient permissions."
+                    
+                )
+            elif token is None and app.config.get("USE_JWT") is None:
+                # authentication is disabled
+                result = f(request, *args, **kwargs)
+                ret = await result if isawaitable(result) else result
+                return ret
+            raise ErrorResponse(
+                HTTPStatus.UNAUTHORIZED,
+                "NotAuthenticated",
+                "User is not authenticated."
+            )
+
+        return decorated
+
+    return decorator
 
 def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
     """Decorator to enable async request handling.
@@ -179,50 +255,34 @@ def validate_request_body(request: Request, error_message: Text) -> None:
     if not request.body:
         raise ErrorResponse(HTTPStatus.BAD_REQUEST, "BadRequest", error_message)
 
+async def authenticate(_: Request) -> NoReturn:
+    """Callback for authentication failed."""
+    raise exceptions.AuthenticationFailed(
+        "Direct JWT authentication not supported. You should already have "
+        "a valid JWT from an authentication provider, Tileai will just make "
+        "sure that the token is valid, but not issue new tokens."
+    )
+
 def create_app(
     app : Sanic = None,
     cors_origins: Union[Text, List[Text], None] = "*",
     auth_token: Optional[Text] = None,
     response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
     jwt_secret: Optional[Text] = None,
-    #jwt_method: Text = "HS256",
+    jwt_method: Text = "HS256",
     endpoints: Optional[Text] = None,
 ) -> Sanic:
     """Class representing a Tileai HTTP server."""
 
     
-    
     app = Sanic(name="tileai_server")
     app.config.RESPONSE_TIMEOUT = response_timeout
     configure_cors(app, cors_origins)
 
-    add_root_route(app)
    
-    """
 
-    # Setup the Sanic-JWT extension
-    if jwt_secret and jwt_method:
-        # `sanic-jwt` depends on having an available event loop when making the call to
-        # `Initialize`. If there is none, the server startup will fail with
-        # `There is no current event loop in thread 'MainThread'`.
-        try:
-            _ = asyncio.get_running_loop()
-        except RuntimeError:
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-
-        # since we only want to check signatures, we don't actually care
-        # about the JWT method and set the passed secret as either symmetric
-        # or asymmetric key. jwt lib will choose the right one based on method
-        app.config["USE_JWT"] = True
-        Initialize(
-            app,
-            secret=jwt_secret,
-            authenticate=authenticate,
-            algorithm=jwt_method,
-            user_id="username",
-        )
-    """
+    
+    
    
   
     
@@ -230,7 +290,7 @@ def create_app(
     # Initialize shared object of type unsigned int for tracking
     # the number of active training processes
     app.ctx.active_training_processes = multiprocessing.Value("I", 0)
-    
+    add_root_route(app)
 
     #@app.exception(ErrorResponse)
     #async def handle_error_response(
@@ -238,7 +298,11 @@ def create_app(
     #) -> HTTPResponse:
     #    return response.json(exception.error_info, status=exception.status)
 
-
+    @app.exception(ErrorResponse)
+    async def handle_error_response(
+        request: Request, exception: ErrorResponse
+    ) -> HTTPResponse:
+        return response.json(exception.error_info, status=exception.status)
     
     
     @app.get("/version")
@@ -252,14 +316,10 @@ def create_app(
         )
 
     @app.get("/status")
-    #@requires_auth(app, auth_token)
-    #@ensure_loaded_agent(app)
+    @requires_auth(app, auth_token)
     async def status(request: Request) -> HTTPResponse:
         """Respond with the model name and the fingerprint of that model."""
-        print(app.ctx)
-
         if hasattr(app.ctx, "models"):
-
             return response.json(
                 {
                     "model_file": app.ctx.agent.processor.model_filename,
@@ -268,12 +328,13 @@ def create_app(
                 }
             )
         else:
+            
             return response.json(
                 {
-                    "model_file":"nessun modello ancora presente"
-                    
+                    "model_file":"nessun modello ancora presente"            
                 }
             )
+        
     
 
     @app.post("/model/enqueuetrain")

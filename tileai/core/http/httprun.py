@@ -20,10 +20,11 @@ from asyncio import AbstractEventLoop
 
 from aioredis import from_url
 import redis.asyncio as redis
-import tileai.core.http.server 
+from tileai.core.http.server  import authenticate
+
+from sanic_jwt import Initialize, exceptions
 
 logger = logging.getLogger()  # get the root logger
-
 
 
 
@@ -34,7 +35,8 @@ def serve_application(
     endpoints: Optional[Text] = None,
     port: int = tileai.shared.const.DEFAULT_SERVER_PORT,
     redis_url : Optional[Text] = None,
-    callback_url : Optional[Text] = None,
+    jwt_secret : Optional[Text] = None,
+    jwt_method: Text = "HS256",
     cors: Optional[Union[Text, List[Text]]] = None,
     auth_token: Optional[Text] = None,
     response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
@@ -90,11 +92,8 @@ def serve_application(
         #await future_reader
     
     @app.listener("before_server_start")
-    async def setup_callaback_url(_app: Sanic, _loop):
-        #if not callback_url:
-        #    raise ValueError("You must specify a redis_url or set the {} Sanic config variable".format(config_name))
-        #logger.info("[sanic-redis] connecting")
-        setattr(_app.ctx, "callback_url", callback_url)
+    async def setup_jwtsecret_url(_app: Sanic, _loop):
+        setattr(_app.ctx, "jwt_secret", jwt_secret)
         
     @app.listener("before_server_start")
     async def setup_redis(_app: Sanic, _loop):
@@ -114,9 +113,9 @@ def serve_application(
         await app.ctx.redis.close()
 
     
+    print("HTTPRUN", jwt_secret)
     
     
-
     protocol = "http"
     interface = tileai.shared.const.DEFAULT_SERVER_INTERFACE
 
@@ -124,6 +123,35 @@ def serve_application(
 
     import multiprocessing
     workers = multiprocessing.cpu_count()
+
+    # Setup the Sanic-JWT extension
+    if jwt_secret and jwt_method:
+        # `sanic-jwt` depends on having an available event loop when making the call to
+        # `Initialize`. If there is none, the server startup will fail with
+        # `There is no current event loop in thread 'MainThread'`.
+        
+        try:
+            _ = asyncio.get_running_loop()
+        except RuntimeError:
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+
+        # since we only want to check signatures, we don't actually care
+        # about the JWT method and set the passed secret as either symmetric
+        # or asymmetric key. jwt lib will choose the right one based on method
+        app.config["USE_JWT"] = True
+       
+        Initialize(
+            app,
+            secret=jwt_secret,
+            authenticate=authenticate,
+            algorithm=jwt_method,
+            user_id="username",
+        )
+
+
+
+
     app.run(
         host=interface,
         port=port,

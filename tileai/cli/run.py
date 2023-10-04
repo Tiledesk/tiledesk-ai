@@ -28,7 +28,7 @@ def add_subparser(
     )
     add_port_param(run_parser)
     add_redis_param(run_parser,help_text="Redis URL")
-    add_callback_url_param(run_parser,help_text="Callback URL")
+    add_jwtsecret_param(run_parser,help_text="JWT Secret")
     run_parser.set_defaults(func=run_server)
 
    
@@ -58,14 +58,14 @@ def add_redis_param(
         required=required and default is None,
     )
 
-def add_callback_url_param(
+def add_jwtsecret_param(
     parser: Union[argparse.ArgumentParser, argparse._ActionsContainer],
     help_text: Text,
     default: Optional[Text] = "",
     required: bool = False) -> None:
-    """Specifies callback_url param."""
+    """Specifies jwt_secret param."""
     parser.add_argument(
-        "-c","--callback_url",
+        "-j","--jwt-secret",
         type=str, 
         default=default,
         help=help_text,

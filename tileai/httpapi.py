@@ -19,7 +19,9 @@ def run(**kwargs: "Dict[Text, Any]") -> None:
     kwargs = tileai.shared.utils.minimal_kwargs(
         kwargs, tileai.core.http.httprun.serve_application
     )
+    print("httpapi ========")
     print(kwargs)
+    print("========")
     tileai.core.http.httprun.serve_application(
         app=app,
         model_path="models/new",
