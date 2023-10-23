@@ -9,6 +9,7 @@ import concurrent.futures
 
 import json
 import requests
+from tileai.shared.exceptions import ErrorResponse
 
 
 import tileai.shared.const
@@ -20,6 +21,7 @@ from asyncio import AbstractEventLoop
 
 from aioredis import from_url
 import redis.asyncio as redis
+
 from tileai.core.http.server  import authenticate
 
 from sanic_jwt import Initialize, exceptions
@@ -62,24 +64,99 @@ def serve_application(
     async def reader(channel: redis.client.PubSub):
         while True:
         #thread = sub.run_in_thread(sleep_time=0.001)
-            message = await channel.get_message(ignore_subscribe_messages=True, timeout=0.1)
-            if message is not None and isinstance(message, dict) and message.get('type') == 'message':
-                nlu_msg = message.get('data')
+            try:
+                message = await channel.get_message(ignore_subscribe_messages=True, timeout=0.1)
+                if message is not None and isinstance(message, dict) and message.get('type') == 'message':
+                    nlu_msg = message.get('data')
                 
-                nlu_str = nlu_msg.decode('utf-8')
+                    nlu_str = nlu_msg.decode('utf-8')
                 
-                nlu_json = json.loads(nlu_str)#.decode('utf-8')
-                print(nlu_json)
-                base_url=f"{protocol}://localhost:{port}"
-                url_post = base_url+ "/model/train"
-                # A POST request to tthe API
-                async with aiohttp.ClientSession() as session:
-                    async with session.post(url_post,  json = nlu_json) as response:
-                        post_response = await response.text()
+                    nlu_json = json.loads(nlu_str)#.decode('utf-8')
+                    print(nlu_json)
+                    modelpath = nlu_json["model"]
+                    base_url=f"{protocol}://localhost:{port}"
+                    url_post = base_url+ "/model/train"
+                    # A POST request to tthe API
+                    
+                    
+                    async with aiohttp.ClientSession() as session:
+                        
+                        async with app.ctx.redis as red:
+                            await red.set(modelpath, "running")
+                            print("task runninng", modelpath)
+                        
+                        async with session.post(url_post,  json = nlu_json) as response:
+                            post_response = await response.text()
+                            print("==================AAAAAAAAA")
+                            print(post_response)
+                            print("==================AAAAAAA")
+                            
+                            #async with app.ctx.redis as red:
+                            #    await red.set(modelpath, "completedaaaa")
+                            #    print("task completed", modelpath)
+
+                            #########
+                            #async with app.ctx.redis as red:
+                                #await red.set(modelpath, "error")
+                                #print("task error", modelpath)
+                    
+                    
+
+                    """
+                    
+                    async with app.ctx.redis as red:
+                        await red.set(modelpath, "running")
+                        print("task runninng", modelpath)
+                        
+                    import tileai.core.http.trainutil as trainutil
+
+                    result = await trainutil.train(nlu_json)
+                    
+
+                    async with app.ctx.redis as red:
+                        await red.set(modelpath, "competed")
+                        #print("task completed", modelpath)
+                    
+                    ##### INVIO post su webhook se esiste webhook altrimenti nulla
+                   
+                    payload: Dict[Text, Any] = dict(
+                        data=json.dumps(result.result()), headers={"Content-Type": "application/json"}
+                    )
+
+                    if "webhook_url" in nlu_json.keys():
+                        webhook_url = nlu_json["webhook_url"]    
+                        async with aiohttp.ClientSession() as session:
+                            await session.post(webhook_url, raise_for_status=True, **payload)  
+
+                    """
+                    
           
           
-                #post_response = await asyncio.post(url_post, json=nlu_str, content_type="application/json")
-                print(post_response)
+                    #post_response = await asyncio.post(url_post, json=result.result(), content_type="application/json")
+            except ErrorResponse as e:
+                if "webhook_url" in nlu_json.keys():
+                    webhook_url = nlu_json["webhook_url"]
+                    payload = dict(json=e.error_info) 
+                    async with aiohttp.ClientSession() as session:
+                            await session.post(webhook_url, raise_for_status=True, **payload)  
+                
+                async with app.ctx.redis as red:
+                    await red.set(modelpath, "error")
+                    print("task error", modelpath)       
+            
+            except Exception as e:
+                if "webhook_url" in nlu_json.keys():
+                    webhook_url = nlu_json["webhook_url"]
+                    payload = dict(json=e.error_info) 
+                    async with aiohttp.ClientSession() as session:
+                            await session.post(webhook_url, raise_for_status=True, **payload)  
+                print(e)
+                async with app.ctx.redis as red:
+                    await red.set(modelpath, "error")
+                    print("task error", modelpath)
+            
+                
+
 
 
                 
@@ -102,7 +179,11 @@ def serve_application(
         logger.info("[sanic-redis] connecting")
         _redis = await from_url(redis_url)
         setattr(_app.ctx, "redis", _redis)
+        setattr(_app.ctx, "redis_url", redis_url)
         conn = _redis
+    
+   
+
 
    
 
@@ -112,9 +193,6 @@ def serve_application(
         logger.info("[sanic-redis] closing")
         await app.ctx.redis.close()
 
-    
-    print("HTTPRUN", jwt_secret)
-    
     
     protocol = "http"
     interface = tileai.shared.const.DEFAULT_SERVER_INTERFACE

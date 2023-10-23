@@ -79,7 +79,7 @@ class TileTrainertorchLSTM(TileTrainer):
         train_loader = DataLoader(train_dataset, batch_size=32, collate_fn=vectorize_batch) #1024
         test_loader  = DataLoader(test_dataset, batch_size=32, collate_fn=vectorize_batch) #1024
         
-        epochs = 200
+        epochs = 20
         learning_rate = 5e-4
 
         loss_fn = nn.CrossEntropyLoss()

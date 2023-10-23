@@ -24,6 +24,8 @@ from sanic.request import Request
 from sanic.response import HTTPResponse
 from sanic_cors import CORS
 from sanic import Blueprint
+from aioredis import from_url
+import redis.asyncio as redis
 
 from http import HTTPStatus
 
@@ -315,16 +317,25 @@ def create_app(
             }
         )
 
-    @app.get("/status")
+    @app.get("/status/<modelid>")
     @requires_auth(app, auth_token)
-    async def status(request: Request) -> HTTPResponse:
+    async def status(request: Request, modelid:None) -> HTTPResponse:
         """Respond with the model name and the fingerprint of that model."""
-        if hasattr(app.ctx, "models"):
+        
+        async with app.ctx.redis as red:
+                modelstatus = await red.get(modelid)
+        if modelstatus: #hasattr(app.ctx, "models"):
+            #return response.json(
+            #    {
+            #        "model_file": app.ctx.agent.processor.model_filename,
+            #        "model_id": app.ctx.agent.model_id,
+            #        "num_active_training_jobs": app.ctx.active_training_processes.value,
+            #    }
+            #)
             return response.json(
                 {
-                    "model_file": app.ctx.agent.processor.model_filename,
-                    "model_id": app.ctx.agent.model_id,
-                    "num_active_training_jobs": app.ctx.active_training_processes.value,
+                    "model": modelid,
+                    "status": modelstatus.decode('utf-8')
                 }
             )
         else:
@@ -358,6 +369,8 @@ def create_app(
         try:
             async with app.ctx.redis as red:
                 await del_old_model(redis_conn=red, model=const.MODEL_PATH_ROOT+modelpath)
+                await red.set(modelpath, "equeued")
+                print("task enqueued", modelpath)
                 res = await red.publish('train',str(nlu_str))
             return response.json({"message":"Task is in queue","n client":res})
         
@@ -396,34 +409,45 @@ def create_app(
                 app.ctx.active_training_processes.value += 1
 
             from tileai.core.model_training import train
-
-
-            # pass `None` to run in default executor
+           
             training_result = train(nlu, const.MODEL_PATH_ROOT+modelpath)
-
+         
             if training_result.model:
                 filename = os.path.basename(training_result.model)
                 
                 print(filename)
                 print(training_result.performanceindex)
+                _redis = await from_url(app.ctx.redis_url)
+                await _redis.set(modelpath, "completed")
+                print("task completed", modelpath)
+               
                 return response.json({"model":training_result.model}) # da valutare se restituire parametri , "performance":training_result.performanceindex
 
             else:
+            
                 raise ErrorResponse(
                     HTTPStatus.INTERNAL_SERVER_ERROR,
                     "TrainingError",
                     "Ran training, but it finished without a trained model.",
                 )
         except ErrorResponse as e:
+            _redis = await from_url(app.ctx.redis_url)
+            await _redis.set(modelpath, "error")
+                
             raise e
         
         except Exception as e:
+           
+            print(e)
+            _redis = await from_url(app.ctx.redis_url)
+            await _redis.set(modelpath, "error")
             raise ErrorResponse(
                 HTTPStatus.INTERNAL_SERVER_ERROR,
                 "TrainingError",
                 f"An unexpected error occurred during training. Error: {e}",
             )
         finally:
+            
             with app.ctx.active_training_processes.get_lock():
                 app.ctx.active_training_processes.value -= 1
 
