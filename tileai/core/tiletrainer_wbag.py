@@ -45,7 +45,22 @@ class TileTrainertorchWBag(TileTrainer):
         self.parameters=parameters
         self.model = model
           
-    def train(self, train_texts,train_labels):
+    def train(self, dataframe):
+
+        #train_texts,train_labels 
+        sentences = dict(
+            sentence=[],
+            entities=[],
+            intent=[]
+        )
+
+        for _, row in dataframe.iterrows():
+            sentences["sentence"].append(row["example"])
+            sentences["entities"].append(row["entities"])
+            sentences["intent"].append(row["intent"])
+        
+        train_texts = sentences["sentence"]
+        train_labels = sentences["intent"]
        
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         dataset = train_texts

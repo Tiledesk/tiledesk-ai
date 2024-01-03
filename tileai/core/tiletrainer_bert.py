@@ -32,7 +32,22 @@ class TileTrainertorchBert(TileTrainer):
 
 
 
-    def train(self, train_texts,train_labels):
+    def train(self, dataframe):
+
+        #train_texts,train_labels 
+        sentences = dict(
+            sentence=[],
+            entities=[],
+            intent=[]
+        )
+
+        for _, row in dataframe.iterrows():
+            sentences["sentence"].append(row["example"])
+            sentences["entities"].append(row["entities"])
+            sentences["intent"].append(row["intent"])
+        
+        train_texts = sentences["sentence"]
+        train_labels = sentences["intent"]
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         os.environ["WANDB_DISABLED"] = "true"
         
@@ -51,7 +66,7 @@ class TileTrainertorchBert(TileTrainer):
         train_texts, val_texts, train_labels, val_labels, label_encoder = prepare_dataset_bert(train_texts,train_labels)
 
         from transformers import AutoTokenizer
-        tokenizer = AutoTokenizer.from_pretrained(self.pipeline[1], cache_dir="./models/trasformer_cache")
+        tokenizer = AutoTokenizer.from_pretrained(self.pipeline[1], cache_dir=const.MODEL_CACHE_TRANSFORMERS)
         
 
 
@@ -246,7 +261,7 @@ class TileTrainertorchBert(TileTrainer):
 
     def predict1(self, text):
         from transformers import AutoTokenizer, Trainer
-        tokenizer = AutoTokenizer.from_pretrained('dbmdz/bert-base-italian-uncased', cache_dir="./models/trasformer_cache")
+        tokenizer = AutoTokenizer.from_pretrained('dbmdz/bert-base-italian-uncased', cache_dir=const.MODEL_CACHE_TRANSFORMERS)
        
         
         test_encodings = tokenizer([text], truncation=True, padding=True)

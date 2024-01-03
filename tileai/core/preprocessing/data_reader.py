@@ -13,7 +13,7 @@ SYNONYM_REGEX = "\[[\w+\s*]+\]\{.+\}"
 DATA_REGEX = "\{.+\}"
 
 
-def make_dataframe(files: List[str]) -> Tuple[pd.DataFrame, List[str], List[str], Dict[str, str]]:
+def make_dataframe(data: Dict) -> Tuple[pd.DataFrame, List[str], List[str], Dict[str, str]]:
     """
     Make data frame for DIETClassifier dataset from files list
 
@@ -21,10 +21,11 @@ def make_dataframe(files: List[str]) -> Tuple[pd.DataFrame, List[str], List[str]
     :return: tuple(dataframe, list of entities class name, list of intent class name, synonym dictionary)
     """
 
-    data = []
+    
+    
     synonym_dict = {}
-    for file in files:
-        data += read_from_json(file=file)
+    
+
 
     df = pd.DataFrame(columns=["example", "intent", "entities"])
 
@@ -328,8 +329,11 @@ if __name__ == '__main__':
     sys.path.append(os.getcwd())
 
     files = ["/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/domain/diet/nlu_diet.json"]
+    data=[]
+    for file in files:
+        data += read_from_json(file=file)
 
-    df, entities_list, intents_list, synonym_dict = make_dataframe(files)
+    df, entities_list, intents_list, synonym_dict = make_dataframe(data)
     print(df.head(120))
     print(entities_list)
     print(intents_list)

@@ -16,7 +16,7 @@ class TileTrainertorchDIET(TileTrainer):
         self.parameters=parameters
         self.model = model
     
-    def train(self, train_texts,train_labels):
+    def train(self, df):
         pass
 
 

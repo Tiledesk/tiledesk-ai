@@ -6,7 +6,7 @@ This module uses a simple Feed Forward Network implemented using PyTorch (more t
 
 ## Use with the command line
 
-> NOTE: recommended Python version >= 3.9
+> NOTE: recommended Python version >= 3.10
 
 ### Install
 

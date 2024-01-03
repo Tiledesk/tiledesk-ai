@@ -31,8 +31,11 @@ scikit-plot= "^0.3.7"
 jsonschema= "^4.20.0"
 redis= "^5.0.0"
 aioredis= "^2.0.0"
-#transformers[torch]
-transformers= "^4.35.0"
+#transformers= "^4.35.0"
+
+[tool.poetry.dependencies.transformers]
+version = "^4.35.0"
+extras = [ "torch"]
 
 [tool.poetry.dev-dependencies]
 

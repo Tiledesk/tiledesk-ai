@@ -53,9 +53,18 @@ def train(nlu:"Text",
     else:
         language = nlu["configuration"]["language"]
     
+    from tileai.core.preprocessing.data_reader import make_dataframe
+    df, entities_list, intents_list, synonym_dict = make_dataframe(nlu_json)
+
+
+    
+
     train_texts=[]
     train_labels=[]
-    intents=[]
+   
+
+    
+
     for obj in nlu_json:    
         for example in obj["examples"]:
             train_texts.append(example) 
@@ -63,7 +72,9 @@ def train(nlu:"Text",
             
     logger.info(train_texts)
     logger.info(train_labels)
-        
+
+    print(train_texts)
+    print(train_labels)    
        
     if not os.path.exists(out):
         os.makedirs(out)
@@ -76,7 +87,8 @@ def train(nlu:"Text",
     tiletrainerfactory = TileTrainerFactory()
     tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],language,pipeline, "",model=out )
  
-    report = tiletrainertorch.train(train_texts, train_labels)
+    #report = tiletrainertorch.train(train_texts, train_labels)
+    report = tiletrainertorch.train(df)
     
         
        
@@ -202,3 +214,5 @@ async def del_old_model(redis_conn, model):
     async with redis_conn as r:
         await r.delete(model+"/bin")
         await r.delete(model)
+
+
