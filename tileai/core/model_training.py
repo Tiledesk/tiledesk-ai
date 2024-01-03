@@ -199,7 +199,6 @@ async def http_query(redis_conn, model, query_text):
     
     
 async def del_old_model(redis_conn, model):
-    
     async with redis_conn as r:
         await r.delete(model+"/bin")
         await r.delete(model)

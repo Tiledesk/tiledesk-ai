@@ -86,6 +86,8 @@ ipython_config.py
 
 # Escludo i modelli creati
 models
+results
+latest_model
 app.py
 setup.cfg
 pyproject.toml_ooo

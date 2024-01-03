@@ -7,6 +7,7 @@ import jsonschema
 
 
 
+
 class TileaiException(Exception):
     """Base exception class for all errors raised by tailai.
 
@@ -39,7 +40,7 @@ class UnsupportedFeatureException(TileaiCoreException):
     """Raised if a requested feature is not supported."""
 
 
-class SchemaValidationError(TileaiException, jsonschema.ValidationError):
+class SchemaValidationError(TileaiException, jsonschema.exceptions.ValidationError):
     """Raised if schema validation via `jsonschema` failed."""
 
 

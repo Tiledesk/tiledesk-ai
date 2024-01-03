@@ -27,6 +27,8 @@ from tileai.core.http.server  import authenticate
 from sanic_jwt import Initialize, exceptions
 
 logger = logging.getLogger()  # get the root logger
+import multiprocessing
+import pickle
 
 
 
@@ -35,18 +37,19 @@ def serve_application(
     app : Sanic = None,
     model_path: Optional[Text] = None,
     endpoints: Optional[Text] = None,
-    port: int = tileai.shared.const.DEFAULT_SERVER_PORT,
+    port: Optional[int] = tileai.shared.const.DEFAULT_SERVER_PORT,
     redis_url : Optional[Text] = None,
     jwt_secret : Optional[Text] = None,
     jwt_method: Text = "HS256",
     cors: Optional[Union[Text, List[Text]]] = None,
     auth_token: Optional[Text] = None,
-    response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
+    response_timeout: Optional[int] = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
     request_timeout: Optional[int] = None,
     
-) -> None:
+) -> Sanic:
+   
     
-    #print(model_path)
+    
     #app = configure_app(
     #    app,
     #    cors,
@@ -61,10 +64,12 @@ def serve_application(
     #    partial(load_agent_on_start, model_path, endpoints, remote_storage),
     #    "before_server_start",
     #)
+   
     async def reader(channel: redis.client.PubSub):
         while True:
         #thread = sub.run_in_thread(sleep_time=0.001)
             try:
+                
                 message = await channel.get_message(ignore_subscribe_messages=True, timeout=0.1)
                 if message is not None and isinstance(message, dict) and message.get('type') == 'message':
                     nlu_msg = message.get('data')
@@ -154,15 +159,23 @@ def serve_application(
                 async with app.ctx.redis as red:
                     await red.set(modelpath, "error")
                     print("task error", modelpath)
-            
+           
                 
+    
 
-
-
+           
+        
+    @app.listener("main_process_start")
+    async def main_process_start(app):
+        #await setup_redis(app)
+        #await setup_jwtsecret_url(app,loop)
+        #await redis_consumer(app,loop) 
+        print("listener_1")
                 
         
     @app.listener('after_server_start') 
     async def redis_consumer(_app:Sanic, _loop):
+        print("3")
         sub = _app.ctx.redis.pubsub()
         await sub.subscribe('train')    
         future_reader = asyncio.create_task(reader(sub)) 
@@ -170,43 +183,36 @@ def serve_application(
     
     @app.listener("before_server_start")
     async def setup_jwtsecret_url(_app: Sanic, _loop):
+        print("2")
         setattr(_app.ctx, "jwt_secret", jwt_secret)
         
-    @app.listener("before_server_start")
-    async def setup_redis(_app: Sanic, _loop):
+    @app.before_server_start
+    async def setup_redis(app):
+        import multiprocessing
+        import pickle
+        print("1")
         if not redis_url:
             raise ValueError("You must specify a redis_url or set the {} Sanic config variable".format(config_name))
         logger.info("[sanic-redis] connecting")
         _redis = await from_url(redis_url)
-        setattr(_app.ctx, "redis", _redis)
-        setattr(_app.ctx, "redis_url", redis_url)
+        #app.shared_ctx.redis= multiprocessing.RawArray('c', pickle.dumps(_redis))
+        setattr(app.ctx, "redis", _redis)
+        setattr(app.ctx, "redis_url", redis_url)
         conn = _redis
     
    
-
-
-   
-
-
     @app.listener('after_server_stop')
     async def close_redis(_app, _loop):
         logger.info("[sanic-redis] closing")
         await app.ctx.redis.close()
-
-    
-    protocol = "http"
-    interface = tileai.shared.const.DEFAULT_SERVER_INTERFACE
-
-    print(f"Starting Tileai server on {protocol}://{interface}:{port}")
-
-    import multiprocessing
-    workers = multiprocessing.cpu_count()
-
+        
+        
     # Setup the Sanic-JWT extension
     if jwt_secret and jwt_method:
-        # `sanic-jwt` depends on having an available event loop when making the call to
-        # `Initialize`. If there is none, the server startup will fail with
-        # `There is no current event loop in thread 'MainThread'`.
+    # `sanic-jwt` depends on having an available event loop when making the call to
+    # `Initialize`. If there is none, the server startup will fail with
+    # `There is no current event loop in thread 'MainThread'`.
+       
         
         try:
             _ = asyncio.get_running_loop()
@@ -227,19 +233,45 @@ def serve_application(
             user_id="username",
         )
 
-
-
-
-    app.run(
-        host=interface,
-        port=port,
-        debug=True,
-        #dev=True,
-        auto_reload=False,
-        workers=1,
-        single_process=False
+    return app   
+        
        
-    )
+
+
+    """
+    loop = asyncio.get_event_loop()
+    protocol = "http"
+    interface = tileai.shared.const.DEFAULT_SERVER_INTERFACE
+
+    print(f"Starting Tileai server on {protocol}://{interface}:{port}")
+
+    import multiprocessing
+    workers = multiprocessing.cpu_count()
+    
+
+
+    
+    from sanic.worker.loader import AppLoader
+    from functools import partial
+    
+    loader = AppLoader(factory =partial(create_mysanic, app))
+    app = loader.load()
+    app.prepare(host=interface,port=port, debug=True, auto_reload=False, workers=workers,single_process=False)
+    Sanic.serve(primary=app, app_loader=loader)
+
+    """
+
+ 
+    #app.run(
+    #    host=interface,
+    #    port=port,
+    #    debug=True,
+    #    #dev=True,
+    #    auto_reload=False,
+    #    workers=workers,
+    #    single_process=False   
+    #)
+    
 
     
    

@@ -11,3 +11,7 @@ MODEL_CONFIG = "tileai.json"
 #MODEL_LABEL_CONFIG = "label.json"
 MODEL_VOC= "vocab.voc"
 MODEL_CACHE_TRANSFORMERS = "./models/trasformer_cache"
+
+STREAM_NAME="stream:train"
+STREAM_CONSUMER_NAME="myconsumer"
+STREAM_CONSUMER_GROUP="consumergroup"

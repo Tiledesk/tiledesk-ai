@@ -1,12 +1,14 @@
 # required modules
 clint
 pandas
+sanic
 Sanic>=22.3.2
 sanic_cors
 sanic_jwt
 aiohttp>=3.8.1
-sklearn
-transformers>=4.20.1
+#sklearn
+scikit-learn
+#transformers>=4.20.1
 datasets
 torch
 torchtext
@@ -14,3 +16,5 @@ scikit-plot
 jsonschema
 redis
 aioredis
+#transformers[torch]
+transformers

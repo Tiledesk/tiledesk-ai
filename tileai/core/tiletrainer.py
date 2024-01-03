@@ -25,6 +25,8 @@ class TileTrainerFactory:
             return TileTrainertorchGPT2(language, pipeline, parameters, model)
         elif name == 'lstm':
             return TileTrainertorchLSTM(language, pipeline, parameters, model)
+        elif name == 'diet':
+            return TileTrainertorchDIET(language, pipeline, parameters, model)
         else:
             return TileTrainertorchFF(language, pipeline, parameters, model)
 

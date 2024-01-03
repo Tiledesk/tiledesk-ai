@@ -5,6 +5,7 @@ import json
 
 import asyncio
 import multiprocessing
+import pickle
 from time import sleep
 from threading import Event
 
@@ -13,7 +14,7 @@ import concurrent.futures
 
 from tileai.shared.exceptions import ErrorResponse
 
-import tileai.shared.const as const
+#import tileai.shared.const as const
 
 from queue import Queue
 
@@ -26,6 +27,7 @@ from sanic_cors import CORS
 from sanic import Blueprint
 from aioredis import from_url
 import redis.asyncio as redis
+import aioredis
 
 from http import HTTPStatus
 
@@ -46,6 +48,8 @@ from typing import (
 )
 
 logger = logging.getLogger(__name__)
+
+
 
 def configure_cors(
     app: Sanic, cors_origins: Union[Text, List[Text], None] = ""
@@ -269,14 +273,16 @@ def create_app(
     app : Sanic = None,
     cors_origins: Union[Text, List[Text], None] = "*",
     auth_token: Optional[Text] = None,
-    response_timeout: int = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
+    response_timeout: Optional[int] = tileai.shared.const.DEFAULT_RESPONSE_TIMEOUT,
     jwt_secret: Optional[Text] = None,
     jwt_method: Text = "HS256",
     endpoints: Optional[Text] = None,
+    port: Optional[int] = tileai.shared.const.DEFAULT_SERVER_PORT,
+    redis_url : Optional[Text] = None,
 ) -> Sanic:
     """Class representing a Tileai HTTP server."""
 
-    
+   
     app = Sanic(name="tileai_server")
     app.config.RESPONSE_TIMEOUT = response_timeout
     configure_cors(app, cors_origins)
@@ -293,6 +299,7 @@ def create_app(
     # the number of active training processes
     app.ctx.active_training_processes = multiprocessing.Value("I", 0)
     add_root_route(app)
+    protocol = "http"
 
     #@app.exception(ErrorResponse)
     #async def handle_error_response(
@@ -300,10 +307,235 @@ def create_app(
     #) -> HTTPResponse:
     #    return response.json(exception.error_info, status=exception.status)
 
+    
+
+
+    async def reader(channel: aioredis.client.Redis):    
+        while True:
+            try:
+                messages = await channel.xreadgroup(
+                    groupname=tileai.shared.const.STREAM_CONSUMER_GROUP,
+                    consumername=tileai.shared.const.STREAM_CONSUMER_NAME,
+                    streams={tileai.shared.const.STREAM_NAME: '>'},
+                    count=1,
+                    block=0  # Set block to 0 for non-blocking
+                )
+                
+
+                for stream, message_data in messages:
+                    for message in message_data:
+                        message_id, message_values = message
+                        print(f"Received message {message_id}: {message_values}")
+                        import ast
+                        
+
+                        byte_str = message_values[b"train"]
+
+                        dict_str = byte_str.decode("UTF-8")
+                        nlu_json = ast.literal_eval(dict_str)
+                        #nlu_msg = message_values
+                    
+                        #nlu_str = nlu_msg.decode('utf-8')
+                    
+                        #nlu_json = mydata["train"]#json.loads(nlu_str)#.decode('utf-8')
+                        print(nlu_json)
+                        modelpath = nlu_json["model"]
+                        base_url=f"{protocol}://localhost:{port}"
+                        url_post = base_url+ "/model/train"
+                        # A POST request to tthe API
+                        
+                        
+                        async with aiohttp.ClientSession() as session:
+                            
+                            async with app.shared_ctx.redis as red:
+                                await red.set(modelpath, "running")
+                                print("task runninng", modelpath)
+                            
+                            async with session.post(url_post,  json = nlu_json) as response:
+                                post_response = await response.text()
+                                print(post_response)
+                            
+                            #async with app.ctx.redis as red:
+                            #    await red.set(modelpath, "completedaaaa")
+                            #    print("task completed", modelpath)
+
+                            #########
+                            #async with app.ctx.redis as red:
+                                #await red.set(modelpath, "error")
+                                #print("task error", modelpath)
+                    
+                    
+
+                    """
+                    
+                    async with app.ctx.redis as red:
+                        await red.set(modelpath, "running")
+                        print("task runninng", modelpath)
+                        
+                    import tileai.core.http.trainutil as trainutil
+
+                    result = await trainutil.train(nlu_json)
+                    
+
+                    async with app.ctx.redis as red:
+                        await red.set(modelpath, "competed")
+                        #print("task completed", modelpath)
+                    
+                    ##### INVIO post su webhook se esiste webhook altrimenti nulla
+                   
+                    payload: Dict[Text, Any] = dict(
+                        data=json.dumps(result.result()), headers={"Content-Type": "application/json"}
+                    )
+
+                    if "webhook_url" in nlu_json.keys():
+                        webhook_url = nlu_json["webhook_url"]    
+                        async with aiohttp.ClientSession() as session:
+                            await session.post(webhook_url, raise_for_status=True, **payload)  
+
+                    """
+                    
+          
+          
+                    #post_response = await asyncio.post(url_post, json=result.result(), content_type="application/json")
+            except ErrorResponse as e:
+                if "webhook_url" in nlu_json.keys():
+                    webhook_url = nlu_json["webhook_url"]
+                    payload = dict(json=e.error_info) 
+                    async with aiohttp.ClientSession() as session:
+                            await session.post(webhook_url, raise_for_status=True, **payload)  
+                
+                async with app.shared_ctx.redis as red:
+                    await red.set(modelpath, "error")
+                    print("task error", modelpath)       
+            
+            except Exception as e:
+                if "webhook_url" in nlu_json.keys():
+                    webhook_url = nlu_json["webhook_url"]
+                    payload = dict(json=e.error_info) 
+                    async with aiohttp.ClientSession() as session:
+                            await session.post(webhook_url, raise_for_status=True, **payload)  
+                print(e)
+                async with app.shared_ctx.redis as red:
+                    await red.set(modelpath, "error")
+                    print("task error", modelpath)
+                    # Process the message here
+
+                    # Acknowledge the message to remove it from the stream
+                    await channel.xack(
+                        tileai.shared.const.STREAM_NAME, 
+                        tileai.shared.const.STREAM_CONSUMER_GROUP, 
+                        message_id)
+
+               
+                
+                
+                
+           
+                
+    
+
+           
+        
+    @app.listener("main_process_start")
+    async def main_process_start(app):
+        #await setup_redis(app)
+        #await setup_jwtsecret_url(app,loop)
+        #await redis_consumer(app,loop) 
+        print("listener_1")
+                
+        
+    @app.listener('after_server_start') 
+    async def redis_consumer(_app:Sanic, _loop):
+        print("redis consumer")
+        
+        sub = _app.shared_ctx.redis
+        try:
+            await sub.xgroup_create(
+                tileai.shared.const.STREAM_NAME, 
+                tileai.shared.const.STREAM_CONSUMER_GROUP, 
+                id="0", 
+                mkstream=True)
+        except aioredis.exceptions.ResponseError as e:
+            if "BUSYGROUP Consumer Group name already exists" not in str(e):
+                raise
+            
+        #setattr(app.shared_ctx, "stream", stream)
+        #await sub.subscribe('train')    
+        future_reader = asyncio.create_task(reader(sub)) 
+        await future_reader
+    
+    @app.listener("before_server_start")
+    async def setup_jwtsecret_url(_app: Sanic, _loop):
+        setattr(_app.ctx, "jwt_secret", jwt_secret)
+        
+    @app.before_server_start
+    async def setup_redis(app):
+        #import multiprocessing
+        #import pickle
+        #print("1")
+        if not redis_url:
+            raise ValueError("You must specify a redis_url or set the  Sanic config variable")
+        logger.info("[sanic-redis] connecting")
+        _redis = await from_url(redis_url)
+        #app.shared_ctx.redis= multiprocessing.RawArray('c', pickle.dumps(_redis))
+        setattr(app.shared_ctx, "redis", _redis)
+        setattr(app.shared_ctx, "redis_url", redis_url)
+        
+        #conn = _redis
+    
+   
+    @app.listener('after_server_stop')
+    async def close_redis(_app, _loop):
+        logger.info("[sanic-redis] closing")
+        await app.shared_ctx.redis.close()
+        
+        
+    # Setup the Sanic-JWT extension
+    if jwt_secret and jwt_method:
+    # `sanic-jwt` depends on having an available event loop when making the call to
+    # `Initialize`. If there is none, the server startup will fail with
+    # `There is no current event loop in thread 'MainThread'`.
+       
+        
+        try:
+            _ = asyncio.get_running_loop()
+        except RuntimeError:
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+
+        # since we only want to check signatures, we don't actually care
+        # about the JWT method and set the passed secret as either symmetric
+        # or asymmetric key. jwt lib will choose the right one based on method
+        app.config["USE_JWT"] = True
+       
+        Initialize(
+            app,
+            secret=jwt_secret,
+            authenticate=authenticate,
+            algorithm=jwt_method,
+            user_id="username",
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     @app.exception(ErrorResponse)
     async def handle_error_response(
         request: Request, exception: ErrorResponse
     ) -> HTTPResponse:
+        #multiprocessing.RawArray('c', pickle.dumps(exception.error_info))
         return response.json(exception.error_info, status=exception.status)
     
     
@@ -322,7 +554,7 @@ def create_app(
     async def status(request: Request, modelid:None) -> HTTPResponse:
         """Respond with the model name and the fingerprint of that model."""
         
-        async with app.ctx.redis as red:
+        async with app.shared_ctx.redis as red:
                 modelstatus = await red.get(modelid)
         if modelstatus: #hasattr(app.ctx, "models"):
             #return response.json(
@@ -364,15 +596,20 @@ def create_app(
         modelpath = nlu["model"]
         print(modelpath)
         nlu_str = json.dumps(nlu)#.encode('utf-8')
+       
         from tileai.core.model_training import del_old_model
-                
+             
         try:
-            async with app.ctx.redis as red:
-                await del_old_model(redis_conn=red, model=const.MODEL_PATH_ROOT+modelpath)
+            async with app.shared_ctx.redis as red:
+                
+                await del_old_model(redis_conn=red, model=tileai.shared.const.MODEL_PATH_ROOT+modelpath)
+                
                 await red.set(modelpath, "equeued")
                 print("task enqueued", modelpath)
-                res = await red.publish('train',str(nlu_str))
-            return response.json({"message":"Task is in queue","n client":res})
+                #res = await red.publish('train',str(nlu_str))
+                res = await red.xadd(tileai.shared.const.STREAM_NAME, {"train":nlu_str} , id="*")
+                
+            return response.json({"message":"Task is in queue","n client":1})
         
         except ErrorResponse as e:
             raise e
@@ -410,14 +647,14 @@ def create_app(
 
             from tileai.core.model_training import train
            
-            training_result = train(nlu, const.MODEL_PATH_ROOT+modelpath)
+            training_result = train(nlu, tileai.shared.const.MODEL_PATH_ROOT+modelpath)
          
             if training_result.model:
                 filename = os.path.basename(training_result.model)
                 
                 print(filename)
                 print(training_result.performanceindex)
-                _redis = await from_url(app.ctx.redis_url)
+                _redis = await from_url(app.shared_ctx.redis_url)
                 await _redis.set(modelpath, "completed")
                 print("task completed", modelpath)
                
@@ -431,7 +668,7 @@ def create_app(
                     "Ran training, but it finished without a trained model.",
                 )
         except ErrorResponse as e:
-            _redis = await from_url(app.ctx.redis_url)
+            _redis = await from_url(app.shared_ctx.redis_url)
             await _redis.set(modelpath, "error")
                 
             raise e
@@ -439,7 +676,7 @@ def create_app(
         except Exception as e:
            
             print(e)
-            _redis = await from_url(app.ctx.redis_url)
+            _redis = await from_url(app.shared_ctx.redis_url)
             await _redis.set(modelpath, "error")
             raise ErrorResponse(
                 HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -468,10 +705,10 @@ def create_app(
 
         try:
             from tileai.core.model_training import query, http_query
-            if(app.ctx.redis is None):
+            if(app.shared_ctx.redis is None):
                 label, risult_dict = query(model, text)
             else:
-                label, risult_dict = await http_query(redis_conn=app.ctx.redis, model=model, query_text=text)
+                label, risult_dict = await http_query(redis_conn=app.shared_ctx.redis, model=model, query_text=text)
 
            
 
@@ -485,7 +722,7 @@ def create_app(
                 f"An unexpected error occurred. Error: {e}",
             )
 
-   
+    
     return app
 
 
