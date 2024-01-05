@@ -13,12 +13,62 @@ sys.path.append(os.getcwd())
 from tileai.core.classifier.diet_classifier import DIETClassifier, DIETClassifierConfig
 from tileai.core.classifier.diet_trainer import DIETTrainer
 from tileai.core.preprocessing.diet_dataset import DIETClassifierDataset
-from tileai.core.preprocessing.data_reader import make_dataframe
+from tileai.core.preprocessing.data_reader import make_dataframe, read_from_json
 
 
 class DIETClassifierWrapper:
     """Wrapper for DIETClassifier."""
-    def __init__(self, config: Union[Dict[str, Dict[str, Any]], str]):
+    def __init__(self, config: Union[Dict[str, Dict[str, Any]], str], 
+                 entities_list=None, intents_list=None,synonym_dict=None):
+        """
+        Create wrapper with configuration.
+
+        :param config: config in dictionary format or path to config file (.json)
+        """
+        #if isinstance(config, str):
+        #    try:
+        #        f = open(config, "r")
+        #    except Exception as ex:
+        #        raise RuntimeError(f"Cannot read config file from {config}: {ex}")
+        #    self.config_file_path = config
+        #    config = json.load(f)
+
+        self.config = config
+        self.util_config = config.get("util", None)
+
+        model_name = config.get("pipeline", None)[1]
+        
+        if not model_name:
+            raise ValueError(f"Config file should have 'model' attribute")
+
+        #self.dataset_config = model_config_dict
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        #model_config_attributes = ["model", "intents", "entities"]
+        # model_config_dict = {k: v for k, v in model_config_dict.items() if k in model_config_attributes}
+
+        self.intents = intents_list
+        self.entities = ["O"] + entities_list
+
+        self.model_config = DIETClassifierConfig(model=model_name, intents=intents_list, entities=entities_list)
+        #**{k: v for k, v in model_config_dict.items() if k in model_config_attributes})
+
+        #training_config_dict = config.get("training", None)
+        #if not training_config_dict:
+        #    raise ValueError(f"Config file should have 'training' attribute")
+
+        #self.training_config = training_config_dict
+        self.tokenizer = BertTokenizerFast.from_pretrained(model_name)
+        self.model = DIETClassifier(config=self.model_config)
+
+        self.model.to(self.device)
+
+        self.softmax = torch.nn.Softmax(dim=-1)
+
+        self.synonym_dict = {} if synonym_dict is None else synonym_dict
+    
+    def old__init__(self, config: Union[Dict[str, Dict[str, Any]], str]):
         """
         Create wrapper with configuration.
 
@@ -186,66 +236,94 @@ class DIETClassifierWrapper:
         self.model.save_pretrained(directory)
         self.tokenizer.save_pretrained(directory)
 
-        config_file_path = "config.json" if not self.config_file_path else self.config_file_path
+        #config_file_path = "config.json" if not self.config_file_path else self.config_file_path
 
-        try:
-            f = open(config_file_path, "w")
-            #f = open("/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/domain/pippo_config.json", "w")
-            print(self.config)
-            json.dump(self.config, f, indent=6)#sort_keys=False)
-            f.close()
-        except Exception as ex:
-            raise RuntimeError(f"Cannot save config to {config_file_path} by error: {ex}")
+        #try:
+        #    f = open(config_file_path, "w")
+        #    print(self.config)
+        #    json.dump(self.config, f, indent=6)#sort_keys=False)
+        #    f.close()
+        #except Exception as ex:
+        #    raise RuntimeError(f"Cannot save config to {config_file_path} by error: {ex}")
 
-    def train_model(self, save_folder: str = "latest_model"):
+    def train_model(self, dataframe=None, synonym_dict=None,  save_folder: str = "latest_model"):
         """
         Create trainer, train and save best model to save_folder
         :param save_folder: path to save folder
         :return: None
         """
-        dataset_folder = self.dataset_config["dataset_folder"]
-        if not path.exists(dataset_folder):
-            raise ValueError(f"Folder {dataset_folder} is not exists")
+        
+        #dataset_folder = self.dataset_config["dataset_folder"]
+        #if not path.exists(dataset_folder):
+        #    raise ValueError(f"Folder {dataset_folder} is not exists")
 
-        files_list = [path.join(dataset_folder, f) for f in listdir(dataset_folder) if path.isfile(path.join(dataset_folder, f)) and f.endswith(".json")]
-        df, _, _, synonym_dict = make_dataframe(files=files_list)
+        #files_list = [path.join(dataset_folder, f) for f in listdir(dataset_folder) if path.isfile(path.join(dataset_folder, f)) and f.endswith(".json")]
+        #data=[]
+        #for file in files_list:
+        #    data += read_from_json(file=file)
+
+        #df, _, _, synonym_dict = make_dataframe(data)
 
         self.synonym_dict.update(synonym_dict)
-        self.config["model"]["synonym"] = self.synonym_dict
+        #self.config["model"]["synonym"] = self.synonym_dict
 
         #df, entities_list, intents_list, synonym_dict = make_dataframe(files)
 
-        dataset = DIETClassifierDataset(dataframe=df, tokenizer=self.tokenizer, entities=self.entities[1:], intents=self.intents)
-
+        dataset = DIETClassifierDataset(dataframe=dataframe, tokenizer=self.tokenizer, entities=self.entities[1:], intents=self.intents)
+        print("====== CON 1:",self.entities[1:])
+        print("=== ALL",self.entities)
         trainer = DIETTrainer(model=self.model, dataset=dataset,
-                              train_range=self.training_config["train_range"],
-                              num_train_epochs=self.training_config["num_train_epochs"],
-                              per_device_train_batch_size=self.training_config["per_device_train_batch_size"],
-                              per_device_eval_batch_size=self.training_config["per_device_eval_batch_size"],
-                              warmup_steps=self.training_config["warmup_steps"],
-                              weight_decay=self.training_config["weight_decay"],
-                              logging_dir=self.training_config["logging_dir"],
-                              early_stopping_patience=self.training_config["early_stopping_patience"],
-                              early_stopping_threshold=self.training_config["early_stopping_threshold"],
-                              output_dir=self.training_config["output_dir"])
+                              train_range=0.95,
+                              num_train_epochs=1,
+                              per_device_train_batch_size=4,
+                              per_device_eval_batch_size=4,
+                              warmup_steps=500,
+                              weight_decay=0.01,
+                              logging_dir="logs",
+                              early_stopping_patience=20,
+                              early_stopping_threshold=1e-5,
+                              output_dir="results")
 
-        trainer.train()
 
-        self.save_pretrained(directory=save_folder)
+
+        #trainer.train()
+
+        self.save_pretrained(directory=self.config.get("model"))
 
 
 if __name__ == "__main__":
-    config_file = "/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/domain/diet_config.json"
+    config_file = "/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/domain/diet/nlu_diet.json"
 
-    wrapper = DIETClassifierWrapper(config=config_file)
+    try:
+        f = open(config_file, "r")
+    except Exception as ex:
+        raise RuntimeError(f"Cannot read file {config_file} with error:\t{ex}")
 
-    print(wrapper.predict(["What if I work on office hour"]))
-    print("\n")
-    #wrapper.train_model()
+    dataforconfig = json.load(f)
+    
+    nlu = dataforconfig["nlu"]
+    dataframe, entities_list,intents_list,synonym_dict = make_dataframe(nlu)
 
-    print(wrapper.predict(["afternoon shift please"]))
-    print("\n")
-    print(wrapper.predict(["how about office working hours"]))
-    print("\n")
-    print(wrapper.predict(["How to check attendance?"]))
+    config={"language":dataforconfig["language"],
+                    "pipeline":dataforconfig["configuration"]["pipeline"],
+                    "parameters":None,
+                    "model":dataforconfig["model"]
+    }
+
+    print(config)
+    print(dataframe.head(5))
+    print(entities_list)
+    print(intents_list)
+    print(synonym_dict)
+    wrapper = DIETClassifierWrapper(config=config,entities_list=entities_list, intents_list=intents_list, synonym_dict=synonym_dict )
+
+    #print(wrapper.predict(["What if I work on office hour"]))
+    #print("\n")
+    wrapper.train_model(dataframe=dataframe,synonym_dict=synonym_dict )
+
+    #print(wrapper.predict(["afternoon shift please"]))
+    #print("\n")
+    #print(wrapper.predict(["how about office working hours"]))
+    #print("\n")
+    #print(wrapper.predict(["How to check attendance?"]))
     

@@ -1,6 +1,7 @@
 {
       "model": {
-            "model": "/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/tileai/core/classifier/latest_model_finet",
+            "trained_model": "home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/results/latest_model_finet",
+            "model": "dslim/bert-base-NER",
             "tokenizer": "dslim/bert-base-NER",
             "dataset_folder": "/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/domain/diet/",
             "exclude_file": null,

@@ -59,22 +59,22 @@ def train(nlu:"Text",
 
     
 
-    train_texts=[]
-    train_labels=[]
+    #train_texts=[]
+    #train_labels=[]
    
 
     
 
-    for obj in nlu_json:    
-        for example in obj["examples"]:
-            train_texts.append(example) 
-            train_labels.append(obj["intent"])
+    #for obj in nlu_json:    
+    #    for example in obj["examples"]:
+    #        train_texts.append(example) 
+    #        train_labels.append(obj["intent"])
             
-    logger.info(train_texts)
-    logger.info(train_labels)
+    #logger.info(train_texts)
+    #logger.info(train_labels)
 
-    print(train_texts)
-    print(train_labels)    
+    #print(train_texts)
+    #print(train_labels)    
        
     if not os.path.exists(out):
         os.makedirs(out)
@@ -88,7 +88,7 @@ def train(nlu:"Text",
     tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],language,pipeline, "",model=out )
  
     #report = tiletrainertorch.train(train_texts, train_labels)
-    report = tiletrainertorch.train(df)
+    report = tiletrainertorch.train(df, entities_list, intents_list, synonym_dict)
     
         
        

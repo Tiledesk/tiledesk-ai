@@ -176,7 +176,8 @@ def async_callback_url(f: Callable[..., Coroutine]) -> Callable:
             try:
                 
                 result: HTTPResponse = await f(request, *args, **kwargs)
-                print(result)
+                
+                #print(result)
                 payload: Dict[Text, Any] = dict(
                     data=result.body, headers={"Content-Type": result.content_type}
                 )
@@ -325,7 +326,7 @@ def create_app(
                 for stream, message_data in messages:
                     for message in message_data:
                         message_id, message_values = message
-                        print(f"Received message {message_id}: {message_values}")
+                        #print(f"Received message {message_id}: {message_values}")
                         import ast
                         
 
@@ -338,7 +339,7 @@ def create_app(
                         #nlu_str = nlu_msg.decode('utf-8')
                     
                         #nlu_json = mydata["train"]#json.loads(nlu_str)#.decode('utf-8')
-                        print(nlu_json)
+                        #print(nlu_json)
                         modelpath = nlu_json["model"]
                         base_url=f"{protocol}://localhost:{port}"
                         url_post = base_url+ "/model/train"
@@ -353,7 +354,7 @@ def create_app(
                             
                             async with session.post(url_post,  json = nlu_json) as response:
                                 post_response = await response.text()
-                                print(post_response)
+                                #print(post_response)
                             
                             #async with app.ctx.redis as red:
                             #    await red.set(modelpath, "completedaaaa")
@@ -414,7 +415,7 @@ def create_app(
                     payload = dict(json=e.error_info) 
                     async with aiohttp.ClientSession() as session:
                             await session.post(webhook_url, raise_for_status=True, **payload)  
-                print(e)
+                #print(e)
                 async with app.shared_ctx.redis as red:
                     await red.set(modelpath, "error")
                     print("task error", modelpath)
@@ -446,7 +447,7 @@ def create_app(
         
     @app.listener('after_server_start') 
     async def redis_consumer(_app:Sanic, _loop):
-        print("redis consumer")
+        #print("redis consumer")
         
         sub = _app.shared_ctx.redis
         try:
@@ -632,7 +633,7 @@ def create_app(
     async def train(request: Request) -> HTTPResponse:
 
         
-        print(request.json)
+        #print(request.json)
     
         validate_request_body(
             request, "You must provide configuration and training data in the request body in order to train your model.")

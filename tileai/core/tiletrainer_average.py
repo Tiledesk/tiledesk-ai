@@ -45,7 +45,7 @@ class TileTrainertorchAverage(TileTrainer):
         self.parameters=parameters
         self.model = model
           
-    def train(self, dataframe):
+    def train(self, dataframe, entities_list, intents_list, synonym_dict):
 
         #train_texts,train_labels 
         sentences = dict(

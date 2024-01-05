@@ -1,9 +1,15 @@
 {
     "configuration": {
       "language": "en",
-      "pipeline": ["diet","CRF"]
+      "pipeline": ["diet","dslim/bert-base-NER"]
     },
+    "language":"en",
     "model": "dietmodel",
+    "util": {
+            "intent_threshold": 0.7,
+            "entities_threshold": 1e-05,
+            "ambiguous_threshold": 0.2
+    },
     "nlu": [
       {
         "intent": "WorkTimesBreaches",

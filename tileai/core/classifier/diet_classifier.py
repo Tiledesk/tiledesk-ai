@@ -76,7 +76,7 @@ class DIETClassifier(BertPreTrainedModel):
             try:
                 
                 from safetensors.torch import load_model, save_model, load_file
-                self.load_state_dict(load_file(f"/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/tileai/core/classifier/latest_model_finet/model.safetensors"))
+                self.load_state_dict(load_file(f"{config.model}/latest_model_finet/model.safetensors"))
                 #self.load_state_dict(checkpoint)
             except Exception as ex:
                 raise  RuntimeError(f"Cannot load state dict from checkpoint by error: {ex}")

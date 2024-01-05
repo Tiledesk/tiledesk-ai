@@ -32,7 +32,7 @@ class TileTrainertorchBert(TileTrainer):
 
 
 
-    def train(self, dataframe):
+    def train(self, dataframe, entities_list, intents_list, synonym_dict):
 
         #train_texts,train_labels 
         sentences = dict(
