@@ -1,9 +1,11 @@
 # pyproject.toml
 [tool.poetry]
 name = "tileai"
-version = "0.1.0"
-description = "Description of your app goes here."
-authors = ["Your Name <your.email@example.com>"]
+version = "0.2.0"
+description = "tiledesk ai"
+authors = ["Gianluca Lorenzo"]
+repository = "https://github.com/Tiledesk/tiledesk-ai"
+license = "MIT"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

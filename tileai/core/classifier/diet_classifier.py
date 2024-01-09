@@ -28,11 +28,13 @@ class DIETClassifier(BertPreTrainedModel):
 
         :param config: config for model
         """
+        model_to_load= config.model
         if path.exists(config.model):
+       
             try:
                 json_config = json.load(open(f"{config.model}/config.json", "r"))
             except Exception as ex:
-                raise RuntimeError(f"Cannot load configuration fil from {config.model} by error: {ex}")
+                raise RuntimeError(f"Cannot load configuration file from {config.model} by error: {ex}")
 
             try:
                 from safetensors import safe_open
@@ -76,7 +78,9 @@ class DIETClassifier(BertPreTrainedModel):
             try:
                 
                 from safetensors.torch import load_model, save_model, load_file
-                self.load_state_dict(load_file(f"{config.model}/latest_model_finet/model.safetensors"))
+                print("model to load", model_to_load)
+                self.load_state_dict(load_file(f"{model_to_load}/model.safetensors"))
+                ######## FIXME
                 #self.load_state_dict(checkpoint)
             except Exception as ex:
                 raise  RuntimeError(f"Cannot load state dict from checkpoint by error: {ex}")

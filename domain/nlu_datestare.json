@@ -1,3 +1,0 @@
-{'configuration': {'language': 'en', 'pipeline': ['lstm']}, 'model': '653ce506c0f5a0002c114aa1', 'nlu': [{'intent': 'start', 'examples': ['\\start']}, {'intent': 'ciao', 'examples': ['ciao', 'buongiorno', 'salute']}, {'intent': 'support', 'e
-xamples': ['ho bisogno di supporto', 'vorrei contattare il vostro team', 'vorrei parlare con un agente', 'posso parlare con qualcuno']}, {'intent': 'sales', 'examples': ['vorrei comprare qualcosa', 'come acquisto', 'acquistare casa', 'ciao c
-ome compro']}, {'intent': 'giocare', 'examples': ['giochiamo', 'giochi per bambini', 'toys e dintorni']}]}

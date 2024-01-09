@@ -49,11 +49,11 @@ class TileTrainertorchDIET(TileTrainer):
 
         configuration = {}
         configuration["language"] = self.language
-        configuration["pipeline"] = self.pipeline
-        
+        configuration["pipeline"] = [self.pipeline[0],self.model]
         configuration["entities"] = entities_list
         configuration["intents"] = intents_list
         configuration["synonim"] = synonym_dict
+        configuration["model"] = self.model
         
         config_label_json = self.model+"/"+const.MODEL_CONFIG
         print(config_label_json)
@@ -103,7 +103,37 @@ class TileTrainertorchDIET(TileTrainer):
             }
 
     def query(self, configuration, query_text):
-        pass
+        
+        from tileai.core.classifier.diet_wrapper import DIETClassifierWrapper
+        model_classifier = DIETClassifierWrapper(
+            config={"language":configuration.get("language", None),
+                    "pipeline":configuration.get("pipeline", None),
+                    "parameters":configuration.get("parameters", None),
+                    "model":configuration.get("model", None)
+            },entities_list=configuration.get("entities", None), intents_list=configuration.get("intents", None), synonym_dict=configuration.get("synonim", None))
+           
+        
+        
+        results_dict  = model_classifier.predict([query_text])[0]
+        id2label = results_dict.get("intent").get("name")
+        
+        #print(id2label)
+
+        return id2label,  results_dict
 
     def query_http(self, vocabll,model_classifier, id2label,tokenizer, query_text):
-        pass
+        
+        #wrapper = DIETClassifierWrapper(
+        #    config={"language":self.language,
+        #            "pipeline":self.pipeline,
+        #            "parameters":self.parameters,
+        #            "model":self.model
+        #},entities_list=entities_list, intents_list=intents_list, synonym_dict=synonym_dict)
+        #print(query_text)
+        
+        results_dict  = model_classifier.predict([query_text])[0]
+        id2label = results_dict.get("intent").get("name")
+        
+        #print(id2label)
+
+        return id2label,  results_dict

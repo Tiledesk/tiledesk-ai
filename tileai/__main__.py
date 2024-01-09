@@ -41,7 +41,7 @@ def create_argument_parser() -> argparse.ArgumentParser:
     return parser
 def tileai_version() -> None:
     """Prints version information of tileai"""
-    from cli import __version__
+    from tileai.cli import __version__
     print(f"Tileai Version      :         {__version__}")
 
 

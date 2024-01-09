@@ -119,6 +119,7 @@ def query(model, query_text):
     
     
 async def http_query(redis_conn, model, query_text):
+    #model models/models/diet-test-status il path al modello e relative configurazioni
     import dill
    
     async with redis_conn as r:
@@ -133,6 +134,7 @@ async def http_query(redis_conn, model, query_text):
         jsonfile_config = open (json_filename, "r", encoding='utf-8')
         config = json.loads(jsonfile_config.read())
         jsonfile_config.close()
+        
     
         pipeline= config["pipeline"]
         tiletrainerfactory = TileTrainerFactory()
@@ -156,9 +158,35 @@ async def http_query(redis_conn, model, query_text):
             async with redis_conn as r:
                 await r.set(model, dill_redis_model)
                 await r.set(model+"/bin", redmc) 
+        
+        elif pipeline[0]=="diet":
+            print("DIET load formfile system")
+            
+            from tileai.core.classifier.diet_wrapper import DIETClassifierWrapper
+            from tileai.core.http.redis_model import RedisModel
+            model_classifier = DIETClassifierWrapper(
+               config={"language":config.get("language", None),
+                        "pipeline":config.get("pipeline", None),
+                        "parameters":config.get("parameters", None),
+                        "model":model
+            },entities_list=config.get("entities", None), intents_list=config.get("intents", None), synonym_dict=config.get("synonim", None))
+           
+            redis_model = RedisModel(vocabulary=None,
+                                     id2label=None,
+                                     configuration=config, 
+                                     tokenizer=None, 
+                                     #model=model_classifier,
+                                     tiletrainertorch= tiletrainertorch
+                                     )
+            
+            redmc = dill.dumps(model_classifier)
+            dill_redis_model = dill.dumps(redis_model)
 
+            async with redis_conn as r:
+                await r.set(model, dill_redis_model)
+                await r.set(model+"/bin", redmc) 
 
-
+            
         else:    
             from tileai.core.preprocessing.textprocessing import load_model
             from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer
@@ -186,12 +214,12 @@ async def http_query(redis_conn, model, query_text):
     else:
         #leggo da redis
         redis_model= dill.loads(dill_redis_model) 
-         
         conf = redis_model.configuration
         pipeline= conf["pipeline"]
         tiletrainertorch = redis_model.tiletrainertorch
         #model_classifier=dill.loads(redis_model.model)
         mod = dill.loads(redmc)
+        
         
         
         #model_classifier.eval()
@@ -206,6 +234,7 @@ async def http_query(redis_conn, model, query_text):
                                                      id2label=redis_model.id2label,
                                                      tokenizer=redis_model.tokenizer, 
                                                      query_text=query_text)
+    
     return label,result_dict    
     
     

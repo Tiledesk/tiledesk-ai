@@ -78,6 +78,10 @@ def run_query(args: argparse.Namespace, can_exit: bool = False) -> Optional[Text
         print ("intent ranking")
         for elem in risult_dict["intent_ranking"]:
             print("\tlabel: ",elem["name"], "- confidence: ", elem["confidence"])
+        #print ("=================================")
+        if(risult_dict["entities"] is not None):
+            for entity in risult_dict["entities"]:
+                print("entity: ",entity["entity_name"], "- start: ", entity["start"], "- end: ", entity["end"],"- text: ", entity["text"])
 
     except Exception as e:
             print(e)

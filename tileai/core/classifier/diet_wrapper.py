@@ -34,8 +34,13 @@ class DIETClassifierWrapper:
         #    config = json.load(f)
 
         self.config = config
-        self.util_config = config.get("util", None)
+        self.util_config = config.get("util", {
+            "intent_threshold": 0.7,
+            "entities_threshold": 1e-05,
+            "ambiguous_threshold": 0.2
+      })
 
+        #if config.get("model")
         model_name = config.get("pipeline", None)[1]
         
         if not model_name:
@@ -60,6 +65,7 @@ class DIETClassifierWrapper:
 
         #self.training_config = training_config_dict
         self.tokenizer = BertTokenizerFast.from_pretrained(model_name)
+       
         self.model = DIETClassifier(config=self.model_config)
 
         self.model.to(self.device)
@@ -109,6 +115,7 @@ class DIETClassifierWrapper:
 
         self.training_config = training_config_dict
         self.tokenizer = BertTokenizerFast.from_pretrained(model_config_dict["tokenizer"])
+        
         self.model = DIETClassifier(config=self.model_config)
 
         self.model.to(self.device)
@@ -152,14 +159,19 @@ class DIETClassifierWrapper:
             if sorted_sentence[-1] >= self.util_config["intent_threshold"] and (
                     sorted_sentence[-1] - sorted_sentence[-2]) >= self.util_config["ambiguous_threshold"]:
                 max_probability = torch.argmax(sentence)
+                max_confidence = sentence[max_probability].item()
+                
             else:
                 max_probability = -1
+                max_confidence = 0
 
             predicted_intents.append({
-                "intent": None if max_probability == -1 else self.intents[max_probability],
-                "intent_ranking": {
-                    intent_name: probability.item() for intent_name, probability in zip(self.intents, sentence)
-                }
+                "intent": None if max_probability == -1 else 
+                    {"name":self.intents[max_probability],"confidence":max_confidence},
+                "intent_ranking": sorted([{
+                    "name":intent_name, "confidence": probability.item()} 
+                     for intent_name, probability in zip(self.intents, sentence)
+                ], key=lambda d: d['confidence'], reverse=True)
             })
 
         return predicted_intents
@@ -182,7 +194,6 @@ class DIETClassifierWrapper:
             latest_entity = None
             for word, token_offset in zip(sentence, offset[1:]):
                 max_probability = torch.argmax(word)
-                print(self.entities[max_probability])
                 if word[max_probability] >= self.util_config["entities_threshold"] and max_probability != 0:
                     if self.entities[max_probability] != latest_entity:
                         latest_entity = self.entities[max_probability]
@@ -208,11 +219,15 @@ class DIETClassifierWrapper:
         inputs, offset_mapping = self.tokenize(sentences=sentences)
         outputs = self.model(**inputs)
         logits = outputs["logits"]
+        
         predicted_intents = self.convert_intent_logits(intent_logits=logits[1])
         predicted_entities = self.convert_entities_logits(entities_logits=logits[0], offset_mapping=offset_mapping)
+        
+        
         predicted_outputs = []
         for sentence, intent_sentence, entities_sentence in zip(sentences, predicted_intents, predicted_entities):
             predicted_outputs.append({})
+            predicted_outputs[-1]["text"] = sentence
             predicted_outputs[-1].update(intent_sentence)
             predicted_outputs[-1].update({"entities": entities_sentence})
             for entity in predicted_outputs[-1]["entities"]:
@@ -222,7 +237,8 @@ class DIETClassifierWrapper:
                     entity["original_text"] = entity["text"]
                     entity["text"] = self.synonym_dict[entity["text"]]
 
-            predicted_outputs[-1]["text"] = sentence
+            
+        
 
         return predicted_outputs
 
@@ -236,15 +252,8 @@ class DIETClassifierWrapper:
         self.model.save_pretrained(directory)
         self.tokenizer.save_pretrained(directory)
 
-        #config_file_path = "config.json" if not self.config_file_path else self.config_file_path
+        
 
-        #try:
-        #    f = open(config_file_path, "w")
-        #    print(self.config)
-        #    json.dump(self.config, f, indent=6)#sort_keys=False)
-        #    f.close()
-        #except Exception as ex:
-        #    raise RuntimeError(f"Cannot save config to {config_file_path} by error: {ex}")
 
     def train_model(self, dataframe=None, synonym_dict=None,  save_folder: str = "latest_model"):
         """
@@ -252,29 +261,14 @@ class DIETClassifierWrapper:
         :param save_folder: path to save folder
         :return: None
         """
-        
-        #dataset_folder = self.dataset_config["dataset_folder"]
-        #if not path.exists(dataset_folder):
-        #    raise ValueError(f"Folder {dataset_folder} is not exists")
-
-        #files_list = [path.join(dataset_folder, f) for f in listdir(dataset_folder) if path.isfile(path.join(dataset_folder, f)) and f.endswith(".json")]
-        #data=[]
-        #for file in files_list:
-        #    data += read_from_json(file=file)
-
-        #df, _, _, synonym_dict = make_dataframe(data)
-
+       
         self.synonym_dict.update(synonym_dict)
-        #self.config["model"]["synonym"] = self.synonym_dict
-
-        #df, entities_list, intents_list, synonym_dict = make_dataframe(files)
-
+       
         dataset = DIETClassifierDataset(dataframe=dataframe, tokenizer=self.tokenizer, entities=self.entities[1:], intents=self.intents)
-        print("====== CON 1:",self.entities[1:])
-        print("=== ALL",self.entities)
+        
         trainer = DIETTrainer(model=self.model, dataset=dataset,
                               train_range=0.95,
-                              num_train_epochs=1,
+                              num_train_epochs=100,
                               per_device_train_batch_size=4,
                               per_device_eval_batch_size=4,
                               warmup_steps=500,
@@ -286,7 +280,7 @@ class DIETClassifierWrapper:
 
 
 
-        #trainer.train()
+        trainer.train()
 
         self.save_pretrained(directory=self.config.get("model"))
 
