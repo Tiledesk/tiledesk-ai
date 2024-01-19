@@ -36,7 +36,7 @@ class DIETClassifierDataset:
             sentences["intent"].append(row["intent"])
 
         sentences.update(tokenizer(sentences["sentence"], return_tensors="pt", return_offsets_mapping=True, padding="max_length", truncation=True, max_length=512))
-
+        
         sentences["entities_labels"] = []
 
         for index in range(len(sentences["sentence"])):
@@ -90,13 +90,18 @@ if __name__ == "__main__":
 
     sys.path.append(os.getcwd())
 
-    from tileai.core.preprocessing.data_reader import make_dataframe
+    from tileai.core.preprocessing.data_reader import make_dataframe, read_from_json
     from transformers import AutoTokenizer
 
     files = ["/home/lorenzo/Sviluppo/tiledesk/tiledesk-ai/domain/diet/nlu_diet.json"]
+
+    data=[]
+    for file in files:
+        data += read_from_json(file=file)
+
     tokenizer = AutoTokenizer.from_pretrained("dslim/bert-base-NER")
 
-    df, entities_list, intents_list, synonym_dict = make_dataframe(files)
+    df, entities_list, intents_list, synonym_dict = make_dataframe(data)
     dataset = DIETClassifierDataset(dataframe=df, tokenizer=tokenizer, entities=entities_list, intents=intents_list)
 
     print(len(dataset))
