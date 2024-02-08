@@ -724,8 +724,43 @@ def create_app(
             )
 
     
-    return app
+    
 
+
+    @app.post("/model/copy")
+    #@requires_auth(app, auth_token)
+    #@ensure_loaded_agent(app)
+    async def copy(request: Request) -> HTTPResponse:
+        validate_request_body(
+            request,
+            "No text message defined in request_body. Add text message to request body "
+            "in order to copy a model as new one.",
+        )
+        
+        model = request.json.get("model")
+        model_copy = request.json.get("copy")
+
+
+        try:
+            from tileai.shared.utils import copy_directory
+            
+            ignore_patterns = []#["*.bak", "*.tmp"]  # Example patterns to exclude
+            copy_directory(model, model_copy, ignore_patterns=ignore_patterns)
+    
+                     
+
+            return response.json({"copy":model_copy})
+
+        except Exception as e:
+            print(e)
+            raise ErrorResponse(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                "ParsingError",
+                f"An unexpected error occurred. Error: {e}",
+            )
+
+    
+    return app
 
 
     #@requires_auth(app, auth_token)

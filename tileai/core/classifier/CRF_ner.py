@@ -80,8 +80,10 @@ def predict(model, dataloader, device):
 
             emission_scores = model(inputs)
             pred_tags = model.crf.decode(emission_scores)
-            predictions.extend(pred_tags)
+            correct = torch.tensor(pred_tags).t()
+            predictions.extend(correct)
 
+    
     return predictions
 
 if __name__ == '__main__':
@@ -118,7 +120,7 @@ if __name__ == '__main__':
     word_to_idx = {word: idx + 1 for idx, word in enumerate(word_vocab)}
     tag_to_idx = {tag: idx + 1 for idx, tag in enumerate(tag_vocab)}
     #print(word_to_idx)
-    #print(tag_to_idx)
+    print(tag_to_idx)
     
 
     # Convert tokens to indices
@@ -135,7 +137,7 @@ if __name__ == '__main__':
     #print(padded_texts[0:2], padded_tags[0:2]) 
 
     # Split the dataset into training and validation sets
-    split_ratio = 0.8
+    split_ratio = 1.0
     split_index = int(len(words) * split_ratio)
     #print(split_index)
 
@@ -164,7 +166,9 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         print(f"Epoch {epoch + 1}/{num_epochs}")
         train(model, train_loader, optimizer, criterion, device)
-        evaluate(model, valid_loader, criterion,device)
+        #evaluate(model, valid_loader, criterion,device)
+
+    print(predict(model, train_loader, device))
 
 
 
