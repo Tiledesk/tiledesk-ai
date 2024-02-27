@@ -186,7 +186,18 @@ async def http_query(redis_conn, model, query_text):
                 await r.set(model, dill_redis_model)
                 await r.set(model+"/bin", redmc) 
 
-            
+        elif pipeline[0]=="semantic":
+            print("Semantic Similarity")
+            from tileai.core.http.redis_model import RedisModel
+            redis_model = RedisModel(vocabulary=None,
+                                     id2label=None,
+                                     configuration=config, 
+                                     tokenizer=None, 
+                                     #model=model_classifier,
+                                     tiletrainertorch= None
+                                     )
+            model_classifier = config["model"]
+
         else:    
             from tileai.core.preprocessing.textprocessing import load_model
             from tileai.core.tokenizer.standard_tokenizer import StandarTokenizer

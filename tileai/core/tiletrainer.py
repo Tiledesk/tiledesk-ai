@@ -9,6 +9,7 @@ from tileai.core.tiletrainer_bert import TileTrainertorchBert
 from tileai.core.tiletrainer_lstm import TileTrainertorchLSTM
 from tileai.core.tiletrainer_gpt2 import TileTrainertorchGPT2
 from tileai.core.tiletrainer_diet import TileTrainertorchDIET
+from tileai.core.tiletrainer_semantic import TileTrainerSemantic
 
 
 class TileTrainerFactory:
@@ -28,6 +29,8 @@ class TileTrainerFactory:
             return TileTrainertorchLSTM(language, pipeline, parameters, model)
         elif name == 'diet':
             return TileTrainertorchDIET(language, pipeline, parameters, model)
+        elif name == 'semantic':
+            return TileTrainerSemantic(language, pipeline, parameters, model)
         else:
             return TileTrainertorchFF(language, pipeline, parameters, model)
 
