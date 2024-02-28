@@ -85,7 +85,7 @@ def train(nlu:"Text",
     #    tiletrainertorch = TileTrainertorchFF("it",pipeline, "",None)
 
     tiletrainerfactory = TileTrainerFactory()
-    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],language,pipeline, "",model=out )
+    tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],language,pipeline, nlu["configuration"],model=out )
  
     #report = tiletrainertorch.train(train_texts, train_labels)
     report = tiletrainertorch.train(df, entities_list, intents_list, synonym_dict)
@@ -94,7 +94,7 @@ def train(nlu:"Text",
        
     return TrainingResult(str(out), 0, report)
     
-def query(model, query_text):
+def query(model, query_text,**kwargs):
     
     ### TO FIX 
     # Anche per la query è necessario verificare il tipo  di modello e creare l'istanza giusta per la preparazione del dato
@@ -109,7 +109,7 @@ def query(model, query_text):
     
     
     pipeline= config["pipeline"]
-
+    
     tiletrainerfactory = TileTrainerFactory()
     tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",model )
 
@@ -118,7 +118,7 @@ def query(model, query_text):
     return label,result_dict
     
     
-async def http_query(redis_conn, model, query_text):
+async def http_query(redis_conn, model, query_text, **kwargs):
     #model models/models/diet-test-status il path al modello e relative configurazioni
     import dill
    
@@ -137,8 +137,10 @@ async def http_query(redis_conn, model, query_text):
         
     
         pipeline= config["pipeline"]
+        print(kwargs)
+        config["gptkey"]=kwargs.get("gptkey", "")
         tiletrainerfactory = TileTrainerFactory()
-        tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, "",model )
+        tiletrainertorch = tiletrainerfactory.create_tiletrainer(pipeline[0],"it",pipeline, config,model )
         if pipeline[0]=="bertclassifier":
             print("bert load from file system")
             from tileai.core.preprocessing.textprocessing import load_model_bert
@@ -187,6 +189,7 @@ async def http_query(redis_conn, model, query_text):
                 await r.set(model+"/bin", redmc) 
 
         elif pipeline[0]=="semantic":
+            
             print("Semantic Similarity")
             from tileai.core.http.redis_model import RedisModel
             redis_model = RedisModel(vocabulary=None,

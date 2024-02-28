@@ -703,13 +703,14 @@ def create_app(
         
         model = request.json.get("model")
         text = request.json.get("text")
+        gptkey= request.json.get("gptkey")
 
         try:
             from tileai.core.model_training import query, http_query
             if(app.shared_ctx.redis is None):
-                label, risult_dict = query(model, text)
+                label, risult_dict = query(model, text, gptkey=gptkey)
             else:
-                label, risult_dict = await http_query(redis_conn=app.shared_ctx.redis, model=model, query_text=text)
+                label, risult_dict = await http_query(redis_conn=app.shared_ctx.redis, model=model, query_text=text, gptkey=gptkey)
 
            
 
